@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="artifact-type" content="narrative">
+  <meta name="design-style" content="briefing">
+  <title>Energi, Wilayah, dan Transisi dalam Perencanaan Wilayah dan Kota (PWK)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="https://unpkg.com/lucide@1.43.0/dist/umd/lucide.min.js"></script>
+
+  <style>
+    :root {
+      color-scheme: light;
+
+      /* Page and surfaces: warm stone-white paper (Briefing style) */
+      --background: #faf9f5;
+      --surface-container-low: #ffffff;
+      --surface-container: #f1efe8;
+      --surface-container-high: #e6e2d6;
+
+      /* Ink */
+      --on-surface: #17181a;
+      --on-surface-variant: #56585c;
+
+      /* Rules */
+      --outline: #17181a;
+      --outline-variant: #dedad0;
+      --border-subtle: #c8c4b8;
+
+      /* Accents */
+      --primary: #17181a;
+      --on-primary: #faf9f5;
+      --primary-container: #f2b705;
+      --on-primary-container: #17181a;
+      --secondary: #1f4e5f;
+      --tertiary: #785008;
+      --error: #b42318;
+      --on-error: #ffffff;
+
+      /* Semantic & tonal tints */
+      --positive: #2b6e52;
+      --warning: #d99000;
+      --focus: #1f4e5f;
+      --surface-gold-tint: #f5e6c4;
+      --surface-slate-tint: #e8eff2;
+      --surface-pine-tint: #e4efe9;
+      --surface-brick-tint: #f7e8e6;
+
+      /* Map vector tokens */
+      --map-ocean: #d9e5eb;
+      --map-land: #efeadd;
+      --map-land-neighbor: #e4ded0;
+      --map-border: #aba28e;
+
+      /* Data series */
+      --data-1: #1f4e5f;
+      --data-2: #d99000;
+      --data-3: #2b6e52;
+      --data-4: #b84a39;
+      --data-5: #5a4a78;
+      --data-context: #c4bfb2;
+
+      /* Fonts */
+      --font-headline: 'Source Serif 4', serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-label: 'Geist Mono', monospace;
+
+      /* Shape */
+      --rounded: 0.25rem;
+      --rounded-lg: 0.375rem;
+      --rounded-full: 0.25rem;
+      --badge-radius: 2px;
+
+      /* Style effects */
+      --section-rule: 1.5px solid var(--outline);
+      --card-border: 1px solid var(--outline-variant);
+      --heading-tracking: -0.02em;
+      --label-tracking: 0.08em;
+
+      /* Narrative Type Scale */
+      --display-size: clamp(2.25rem, 1.4rem + 3.2vw, 3.85rem);
+      --headline-size: clamp(1.625rem, 1.15rem + 1.8vw, 2.35rem);
+      --subhead-size: clamp(1.15rem, 1.05rem + 0.5vw, 1.4rem);
+      --body-size: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+      --label-size: clamp(0.75rem, 0.72rem + 0.12vw, 0.8125rem);
+
+      /* Spacing scale (4pt base) */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2.5rem;
+      --space-2xl: 4rem;
+      --space-3xl: 5.5rem;
+
+      /* Motion */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --dur-micro: 120ms;
+      --dur-short: 220ms;
+      --dur-long: 420ms;
+    }
+
+    /* Base reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      overflow-x: clip;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background);
+      color: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: var(--body-size);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      scroll-behavior: smooth;
+    }
+    header { position: static !important; }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    /* Focus rings */
+    :focus-visible {
+      outline: 2.5px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .page-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-2xl);
+      padding: var(--space-lg) var(--space-lg) var(--space-3xl);
+      max-width: 1220px;
+      margin: 0 auto;
+    }
+    .page-grid * { min-width: 0; }
+
+    /* Briefing Dossier Treatments */
+    .dossier-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-sm);
+      border-bottom: var(--section-rule);
+      padding-bottom: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+    .dossier-bar-left {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .dossier-pill {
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.6875rem;
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      padding: 0.22rem 0.55rem;
+      border-radius: var(--badge-radius);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .dossier-meta {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--on-surface-variant);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .title {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--display-size);
+      letter-spacing: var(--heading-tracking);
+      line-height: 1.08;
+      color: var(--on-surface);
+      margin: 0;
+    }
+    .section-title {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--headline-size);
+      letter-spacing: var(--heading-tracking);
+      line-height: 1.14;
+      color: var(--on-surface);
+      margin: 0;
+    }
+    .subsection-title {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--subhead-size);
+      letter-spacing: -0.015em;
+      line-height: 1.25;
+      color: var(--on-surface);
+      margin: 0 0 var(--space-sm) 0;
+    }
+    .standfirst {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+      line-height: 1.45;
+      color: var(--secondary);
+      margin: var(--space-md) 0 0 0;
+      max-width: 72ch;
+    }
+    .prose {
+      max-width: 65ch;
+      color: var(--on-surface);
+      margin: 0 0 var(--space-md) 0;
+    }
+    .prose:last-child { margin-bottom: 0; }
+
+    .figure-card {
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-lg);
+    }
+    .figure-card-compact {
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-md) var(--space-lg);
+    }
+    .figure-card .value, .kpi-value {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-variant-numeric: lining-nums tabular-nums;
+      line-height: 1.05;
+      color: var(--on-surface);
+    }
+
+    .index-num {
+      font-family: var(--font-label);
+      font-weight: 600;
+      font-size: var(--label-size);
+      color: var(--secondary);
+      letter-spacing: 0.04em;
+    }
+
+    .aside-box {
+      background: var(--surface-container);
+      border-top: var(--section-rule);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: 0 0 var(--rounded-lg) var(--rounded-lg);
+    }
+
+    .tag-chip {
+      display: inline-block;
+      background: var(--surface-gold-tint);
+      color: var(--tertiary);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 500;
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--rounded);
+      letter-spacing: 0.03em;
+    }
+    .tag-chip-slate {
+      background: var(--surface-slate-tint);
+      color: var(--secondary);
+    }
+    .tag-chip-pine {
+      background: var(--surface-pine-tint);
+      color: var(--positive);
+    }
+    .tag-chip-brick {
+      background: var(--surface-brick-tint);
+      color: var(--data-4);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-xs);
+      min-height: 44px;
+      padding: 0.5rem 0.95rem;
+      border-radius: var(--rounded);
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background-color var(--dur-micro) var(--ease-out),
+                  color var(--dur-micro) var(--ease-out),
+                  box-shadow var(--dur-micro) var(--ease-out);
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--on-primary);
+      border: 1px solid var(--primary);
+    }
+    .btn-primary:hover {
+      background: var(--secondary);
+      border-color: var(--secondary);
+    }
+    .btn-secondary {
+      background: var(--surface-container-low);
+      color: var(--on-surface);
+      border: 1px solid var(--border-subtle);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-container-high);
+    }
+    .btn-secondary[aria-pressed="true"],
+    .btn-toggle.active {
+      background: var(--secondary);
+      color: var(--on-primary);
+      border-color: var(--secondary);
+    }
+
+    /* Navigation Index Strip */
+    .toc-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      padding: var(--space-md) 0;
+      border-top: var(--card-border);
+      border-bottom: var(--card-border);
+      margin-top: var(--space-lg);
+    }
+    .toc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      min-height: 44px;
+      padding: 0.35rem 0.75rem;
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded);
+      color: var(--on-surface);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: background-color var(--dur-micro) var(--ease-out),
+                  color var(--dur-micro) var(--ease-out);
+    }
+    .toc-link:hover {
+      background: var(--surface-container);
+      color: var(--secondary);
+    }
+
+    /* Grids */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+    }
+    .kpi-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--on-surface-variant);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-xs);
+    }
+    .kpi-value {
+      font-size: clamp(1.75rem, 1.35rem + 1.2vw, 2.4rem);
+      margin-bottom: var(--space-xs);
+    }
+    .kpi-sub {
+      font-size: 0.85rem;
+      color: var(--on-surface-variant);
+      line-height: 1.4;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .split-grid-equal {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .map-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: stretch;
+    }
+    .network-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: stretch;
+    }
+
+    /* Section 01: 4 Reasons & Spatial Chain */
+    .reason-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+    }
+    .reason-card {
+      text-align: left;
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-md);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      transition: background-color var(--dur-micro) var(--ease-out),
+                  box-shadow var(--dur-micro) var(--ease-out);
+    }
+    .reason-card:hover {
+      background: var(--surface-container);
+    }
+    .reason-card.active {
+      background: var(--surface-slate-tint);
+      box-shadow: inset 4px 0 0 var(--secondary);
+    }
+    .reason-card-title {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--on-surface);
+    }
+    .reason-card-stat {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--tertiary);
+    }
+
+    .chain-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(175px, 100%), 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+    }
+    .chain-node {
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-top: 3px solid var(--secondary);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .chain-step {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--secondary);
+      text-transform: uppercase;
+    }
+    .chain-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--on-surface);
+    }
+    .chain-loc {
+      font-size: 0.85rem;
+      color: var(--on-surface-variant);
+    }
+    .chain-pwk {
+      margin-top: auto;
+      padding-top: var(--space-xs);
+      border-top: 1px dashed var(--outline-variant);
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      color: var(--tertiary);
+    }
+
+    /* Section 02: Leaflet Map */
+    #energy-map {
+      width: 100%;
+      min-height: 500px;
+      height: 520px;
+      background-color: var(--map-ocean);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+      position: relative;
+      z-index: 1;
+    }
+    .leaflet-container {
+      background-color: var(--map-ocean) !important;
+      font-family: var(--font-body);
+    }
+    .map-controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      align-items: end;
+      margin-bottom: var(--space-md);
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .control-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--on-surface-variant);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+    .select-input, .num-input {
+      min-height: 44px;
+      padding: 0.45rem 2.1rem 0.45rem 0.75rem;
+      background: var(--surface-container-low);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--rounded);
+      color: var(--on-surface);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .num-input {
+      padding-right: 0.75rem;
+      font-family: var(--font-label);
+    }
+    .map-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      margin-top: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--surface-container);
+      border-radius: var(--rounded);
+      font-size: 0.8rem;
+      color: var(--on-surface-variant);
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .legend-swatch-line {
+      width: 18px;
+      height: 3px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .swatch-load { background: var(--data-4); }
+    .swatch-rez { background: var(--data-2); }
+    .swatch-rural { background: var(--data-3); }
+    .swatch-hydro { background: var(--data-1); }
+    .swatch-grid { background: var(--data-5); }
+
+    .inspector-panel {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      height: 100%;
+    }
+    .inspector-meta-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--space-sm);
+      padding: var(--space-sm) 0;
+      border-top: var(--card-border);
+      border-bottom: var(--card-border);
+    }
+    .inspector-kv-label {
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      color: var(--on-surface-variant);
+      text-transform: uppercase;
+    }
+    .inspector-kv-val {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--on-surface);
+    }
+
+    /* Section 03: Funnel */
+    .funnel-stage-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+    .funnel-stage-btn {
+      width: 100%;
+      text-align: left;
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+    .funnel-stage-btn:hover {
+      background: var(--surface-container);
+    }
+    .funnel-stage-btn.active {
+      background: var(--surface-slate-tint);
+      box-shadow: inset 4px 0 0 var(--secondary);
+    }
+    .funnel-bar-track {
+      width: 100%;
+      height: 12px;
+      background: var(--surface-container-high);
+      border-radius: var(--rounded);
+      overflow: hidden;
+    }
+    .funnel-bar-fill {
+      height: 100%;
+      border-radius: var(--rounded);
+      transition: width var(--dur-long) var(--ease-out);
+    }
+    .fill-teoretis { background: var(--data-context); width: 100%; }
+    .fill-teknis { background: var(--data-1); width: 78%; }
+    .fill-ekonomis { background: var(--data-2); width: 34%; }
+    .fill-realistis { background: var(--data-3); width: 9%; }
+
+    /* Section 04: Network Graph */
+    #network-canvas-wrap {
+      width: 100%;
+      min-height: 540px;
+      height: 540px;
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+      position: relative;
+      overflow: hidden;
+    }
+    #network-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    #network-svg:active {
+      cursor: grabbing;
+    }
+    .net-link {
+      stroke: var(--data-context);
+      stroke-width: 1.6px;
+      stroke-opacity: 0.72;
+      transition: stroke-opacity var(--dur-micro) var(--ease-out),
+                  stroke var(--dur-micro) var(--ease-out);
+    }
+    .net-link.highlighted {
+      stroke: var(--secondary);
+      stroke-width: 2.6px;
+      stroke-opacity: 1;
+    }
+    .net-link.dimmed {
+      stroke-opacity: 0.14;
+    }
+    .net-node {
+      cursor: pointer;
+    }
+    .net-node circle {
+      stroke: var(--surface-container-low);
+      stroke-width: 2.5px;
+      transition: transform var(--dur-micro) var(--ease-out),
+                  opacity var(--dur-micro) var(--ease-out);
+    }
+    .net-node.selected circle {
+      stroke: var(--primary-container);
+      stroke-width: 4px;
+    }
+    .net-node.dimmed {
+      opacity: 0.22;
+    }
+    .net-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+      fill: var(--on-surface);
+      pointer-events: none;
+      text-anchor: middle;
+    }
+    .net-edge-label {
+      font-family: var(--font-label);
+      font-size: 9.5px;
+      fill: var(--secondary);
+      pointer-events: none;
+      text-anchor: middle;
+    }
+
+    /* Section 05: Calculator & Matrix */
+    .calc-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+    }
+    .slider-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 110px;
+      gap: var(--space-sm);
+      align-items: center;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--secondary);
+      cursor: pointer;
+    }
+    .output-banner {
+      background: var(--surface-container);
+      border-left: 4px solid var(--secondary);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--rounded);
+      margin-bottom: var(--space-md);
+    }
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+      gap: var(--space-md);
+    }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    thead th {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--on-surface-variant);
+      padding: var(--space-md);
+      border-bottom: var(--section-rule);
+      background: var(--surface-container);
+    }
+    tbody td {
+      padding: var(--space-md);
+      border-bottom: var(--card-border);
+      vertical-align: top;
+    }
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+    tbody tr:hover {
+      background: var(--background);
+    }
+    .num-cell {
+      font-family: var(--font-label);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* Chart containers */
+    .chart-box {
+      position: relative;
+      min-height: 310px;
+      height: 320px;
+      width: 100%;
+    }
+
+    /* Collapsible details */
+    details.dossier-details {
+      background: var(--surface-container);
+      border: var(--card-border);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+      margin-top: var(--space-md);
+    }
+    details.dossier-details summary {
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--secondary);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 32px;
+    }
+    details.dossier-details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    /* Reveal animation */
+    .reveal-section {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity var(--dur-long) var(--ease-out),
+                  transform var(--dur-long) var(--ease-out);
+    }
+
+    /* Governance 3-pillar cards */
+    .card-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(270px, 100%), 1fr));
+      gap: var(--space-lg);
+    }
+
+    .citation-note {
+      font-family: var(--font-label);
+      font-size: 0.74rem;
+      color: var(--on-surface-variant);
+      margin-top: var(--space-sm);
+    }
+
+    @media (max-width: 900px) {
+      .split-grid,
+      .split-grid-equal,
+      .map-layout,
+      .network-layout,
+      .calc-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      #energy-map { min-height: 400px; height: 420px; }
+      #network-canvas-wrap { min-height: 440px; height: 460px; }
+    }
+
+    @media (max-width: 640px) {
+      .page-grid {
+        padding: var(--space-md) var(--space-md) var(--space-2xl);
+        gap: var(--space-xl);
+      }
+      .figure-card { padding: var(--space-md); }
+      .slider-controls { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-grid">
+
+    <!-- MASTHEAD & EXECUTIVE BRIEFING -->
+    <header>
+      <div class="dossier-bar">
+        <div class="dossier-bar-left">
+          <span class="dossier-pill">Dossier PWK · GCC332</span>
+          <span class="dossier-meta">Perencanaan Pertanian &amp; Teknologi Terbarukan · Edisi Sintesis 2026</span>
+        </div>
+        <span class="dossier-meta">Fokus: Indonesia &amp; Komparasi Global</span>
+      </div>
+
+      <h1 class="title">Energi, Wilayah, dan Transisi: Mengapa Sistem Energi adalah Pekerjaan Perencana Wilayah dan Kota</h1>
+      <p class="standfirst">Dari antrean Pertalite dan LPG 3 kg hingga jaringan Nusantara Supergrid, Renewable Energy Zones (REZ), dan kemandirian BUMDes: membaca transisi energi sebagai persoalan lokasi, jalur distribusi, jejak lahan, dan tata kelola ruang.</p>
+
+      <div class="kpi-grid">
+        <article class="figure-card-compact">
+          <div class="kpi-label">Potensi Teknis EBT Nasional</div>
+          <div class="kpi-value">3.687 GW</div>
+          <div class="kpi-sub">Total potensi nasional lintas sumber (surya, hidro, angin, panas bumi, bioenergi, laut); realisasi terpasang masih jauh di bawah angka teknis.</div>
+        </article>
+        <article class="figure-card-compact">
+          <div class="kpi-label">Ketimpangan Spasial Jawa–Bali</div>
+          <div class="kpi-value">19,6% vs ~70%</div>
+          <div class="kpi-sub">Jawa–Bali menyimpan hanya 19,6% potensi EBT nasional (721,08 GW), padahal menanggung sekitar 70% pusat beban listrik 2030.</div>
+        </article>
+        <article class="figure-card-compact">
+          <div class="kpi-label">Target Bauran EBT 2025</div>
+          <div class="kpi-value">23% (Meleset)</div>
+          <div class="kpi-sub">Meski porsi EBT naik tiga kali lipat dalam sepuluh tahun, batu bara justru menguat dan capaian tertinggal sekitar 12,3% pada 2022.</div>
+        </article>
+        <article class="figure-card-compact">
+          <div class="kpi-label">Proyeksi DMN RUKN 2060</div>
+          <div class="kpi-value">443 GW</div>
+          <div class="kpi-sub">Terdiri dari 42% pembangkit EBT variabel (VRE) plus penyimpanan 34 GW dan 58% dispatchable, ditopang super grid antarpulau.</div>
+        </article>
+      </div>
+
+      <nav class="toc-nav" aria-label="Navigasi bagian modul">
+        <a class="toc-link" href="#bagian-01"><span class="index-num">01</span> Alasan Transisi &amp; Rantai Ruang</a>
+        <a class="toc-link" href="#bagian-02"><span class="index-num">02</span> Peta Spasial Energi &amp; REZ</a>
+        <a class="toc-link" href="#bagian-03"><span class="index-num">03</span> Corong Potensi 3.687 GW</a>
+        <a class="toc-link" href="#bagian-04"><span class="index-num">04</span> Analisis Jaringan PWK</a>
+        <a class="toc-link" href="#bagian-05"><span class="index-num">05</span> Lab Kapasitas, LCOE &amp; TTG</a>
+        <a class="toc-link" href="#bagian-06"><span class="index-num">06</span> Integrasi Kebijakan Spasial</a>
+      </nav>
+    </header>
+
+    <!-- BAGIAN 01: EMPAT ALASAN TRANSISI & RANTAI SPASIAL -->
+    <section id="bagian-01" class="reveal-section">
+      <div class="dossier-bar">
+        <div class="dossier-bar-left">
+          <span class="dossier-pill">Bagian 01</span>
+          <span class="dossier-meta">Bab 1.1 &amp; 1.2 · Ruang, Pemicu Krisis, dan Lanskap 2026</span>
+        </div>
+        <span class="dossier-meta">Konsep Inti PWK</span>
+      </div>
+
+      <h2 class="section-title">Energi Selalu Punya Lokasi, Jalur, dan Jejak Lahan — Bukan Sekadar Isu Cadangan Minyak</h2>
+      <p class="standfirst">Sabtu, 3 September 2022 pukul 14.30 WIB, harga Pertalite naik dari Rp7.650 menjadi Rp10.000 per liter dan Solar dari Rp5.150 menjadi Rp6.800 per liter. Dua setengah tahun kemudian, 1 Februari 2025, pembatasan penjualan LPG 3 kg memicu antrean panjang di banyak kota sebelum dicabut dalam empat hari dengan mengubah sekitar 375 ribu pengecer menjadi sub-pangkalan.</p>
+
+      <div class="split-grid" style="margin-top: var(--space-lg);">
+        <div>
+          <p class="prose">Kedua peristiwa itu tampak terjadi di SPBU dan warung permukiman, tetapi akarnya berada pada ladang minyak nasional yang menua, ketergantungan pada kapal tanker impor, dan tekanan anggaran negara. Para ahli geografi energi menegaskan bahwa transisi energi adalah proses keruangan: sumber energi, jaringan transmisi, dan pusat konsumsi menempati koordinat yang berbeda.</p>
+          <p class="prose">Di sisi lain, bentuk kota (<em>urban form</em>) mengunci kebutuhan energi selama puluhan tahun. Studi klasik Newman dan Kenworthy menunjukkan kota yang padat dengan angkutan umum yang baik mengonsumsi bensin per kapita jauh lebih rendah dibanding kota yang menyebar. Sebaliknya, peralihan menuju energi surya dan angin menciptakan “lanskap energi” baru karena membutuhkan lahan jauh lebih luas per unit energi dibanding PLTU, sehingga langsung bersaing dengan pertanian, hutan, dan permukiman.</p>
+
+          <h3 class="subsection-title" style="margin-top: var(--space-lg);">Empat Alasan Kuat vs Satu Argumen Lemah</h3>
+          <p class="prose" style="font-size: 0.92rem; color: var(--on-surface-variant);">Pilih tiap kartu untuk memeriksa bukti data dan implikasinya terhadap rencana tata ruang wilayah.</p>
+
+          <div class="reason-grid" id="reason-cards">
+            <button type="button" class="reason-card active" onclick="selectReason('impor', this)">
+              <span class="index-num">ALASAN 01</span>
+              <span class="reason-card-title">Ketergantungan Impor</span>
+              <span class="reason-card-stat">BBM &amp; LPG · Kerentanan Eksternal</span>
+            </button>
+            <button type="button" class="reason-card" onclick="selectReason('emisi', this)">
+              <span class="index-num">ALASAN 02</span>
+              <span class="reason-card-title">Emisi &amp; Kualitas Udara</span>
+              <span class="reason-card-stat">Langit Kelabu Kota &amp; Komitmen Iklim</span>
+            </button>
+            <button type="button" class="reason-card" onclick="selectReason('fiskal', this)">
+              <span class="index-num">ALASAN 03</span>
+              <span class="reason-card-title">Beban Fiskal Negara</span>
+              <span class="reason-card-stat">Subsidi Fosil vs Investasi Infrastruktur</span>
+            </button>
+            <button type="button" class="reason-card" onclick="selectReason('keandalan', this)">
+              <span class="index-num">ALASAN 04</span>
+              <span class="reason-card-title">Keandalan Pasokan</span>
+              <span class="reason-card-stat">Ketahanan Wilayah Kepulauan</span>
+            </button>
+          </div>
+        </div>
+
+        <aside class="figure-card" id="reason-detail-panel" aria-live="polite">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-sm); margin-bottom:var(--space-sm);">
+            <span class="tag-chip" id="reason-tag">Alasan Teruji · Data Resmi</span>
+            <span class="index-num" id="reason-code">01 / 04</span>
+          </div>
+          <h3 class="subsection-title" id="reason-detail-title">Ketergantungan Impor BBM dan LPG</h3>
+          <p id="reason-detail-body" style="margin:0 0 var(--space-md) 0; font-size:0.95rem;">Indonesia mengalami defisit neraca minyak dan LPG seiring menurunnya produksi sumur tua. Dalam Rencana Umum Energi Nasional (RUEN), pasokan LPG masih sangat bergantung pada impor untuk dapur rumah tangga, sehingga gejolak kurs dan harga energi global langsung memicu guncangan harga di tingkat pengecer dan SPBU.</p>
+          <div class="aside-box" style="border-radius:var(--rounded); margin-bottom:var(--space-md);">
+            <div class="kpi-label">Implikasi bagi Perencana PWK</div>
+            <p id="reason-detail-pwk" style="margin:0; font-size:0.88rem;">Perencanaan transportasi publik kompak berbasis TOD (mengurangi permintaan BBM) serta elektrifikasi dan jaringan gas/kompor induksi berbasis energi lokal di kawasan permukiman baru dalam RDTR.</p>
+          </div>
+          <div style="border-top: var(--card-border); padding-top: var(--space-sm);">
+            <div class="kpi-label" style="color: var(--data-4);">Mengapa Argumen “Minyak Segera Habis” Lemah?</div>
+            <p style="margin:0; font-size:0.85rem; color:var(--on-surface-variant);">Cadangan terbukti (<em>proven reserves</em>) bersifat dinamis mengikuti teknologi eksplorasi dan harga keekonomian. Jauh sebelum cadangan fosil benar-benar habis di perut bumi, biaya ekonomi, fiskal, polusi udara, dan risiko iklim sudah memaksa transisi terjadi.</p>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Spatial Chain Explorer -->
+      <div class="figure-card" style="margin-top: var(--space-xl);">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:var(--space-md); border-bottom:var(--card-border); padding-bottom:var(--space-md);">
+          <div>
+            <span class="index-num">DIAGRAM RANTAI KERUANGAN</span>
+            <h3 class="subsection-title" style="margin: var(--space-xs) 0 0 0;">Setiap Simpul Sistem Energi Diatur Dokumen Tata Ruang</h3>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:var(--space-xs);" role="group" aria-label="Pilih rantai sistem energi">
+            <button type="button" class="btn btn-secondary btn-toggle active" onclick="selectChain('listrik', this)">Listrik Batu Bara</button>
+            <button type="button" class="btn btn-secondary btn-toggle" onclick="selectChain('lpg', this)">Rantai LPG Impor</button>
+            <button type="button" class="btn btn-secondary btn-toggle" onclick="selectChain('ebt', this)">Transisi EBT Terpadu</button>
+          </div>
+        </div>
+        <p id="chain-summary" style="margin:var(--space-md) 0 0 0; font-size:0.95rem; color:var(--on-surface-variant);">Sistem kelistrikan eksisting membentang ratusan hingga ribuan kilometer dari mulut tambang di Kalimantan menuju pusat beban perkotaan di Jawa melalui jalur laut dan koridor tegangan ekstra tinggi.</p>
+        <div class="chain-flow" id="chain-flow-container"></div>
+      </div>
+
+      <!-- Landscape 2026 & RUKN / 1.5C Chart -->
+      <div class="split-grid-equal" style="margin-top: var(--space-xl);">
+        <div class="figure-card">
+          <div class="dossier-bar" style="margin-bottom:var(--space-sm);">
+            <span class="index-num">LANSKAP 2026 &amp; PEMBACAAN KRITIS “EBT”</span>
+            <span class="tag-chip tag-chip-brick">Perlu Kehati-hatian Regulasi</span>
+          </div>
+          <h3 class="subsection-title">Mengapa Porsi EBT Naik 3× Lipat Namun Target 2025 Tetap Meleset?</h3>
+          <p style="font-size:0.93rem;">Dalam satu dekade terakhir kapasitas dan produksi EBT meningkat, tetapi pertumbuhan konsumsi dan penguatan pembangkit batu bara jauh lebih cepat sehingga target bauran EBT 23% pada 2025 gagal tercapai. Lebih jauh lagi, regulasi Indonesia menggabungkan <strong>Energi Baru</strong> dan <strong>Energi Terbarukan</strong> dalam satu akronim “EBT”.</p>
+          <p style="font-size:0.93rem;">Akibatnya, teknologi berbasis fosil seperti <strong>gasifikasi batu bara</strong>, bersama hidrogen dan tenaga nuklir (PLTN pertama ditargetkan sekitar 2032), dapat tercatat sebagai capaian bauran EBT. Bagi perencana wilayah, pencampuran label ini krusial karena tapak ruang, emisi lokal, dan risiko keselamatan PLTN (zona keselamatan kawasan khusus) sangat berbeda dari PLTS atau PLTMH.</p>
+          <div class="aside-box" style="margin-top:var(--space-md); border-radius:var(--rounded);">
+            <div class="kpi-label">Kesenjangan Tolok Ukur Iklim 1,5°C Tahun 2030</div>
+            <p style="margin:0; font-size:0.86rem;">Agar selaras dengan jalur pembatasan pemanasan global 1,5°C, porsi pembangkit terbarukan pada 2030 perlu mencapai 45% (IESR) hingga 57% (IEA) atau 55–82% (Climate Action Tracker), dengan kebutuhan investasi tahunan USD 10–27 miliar/tahun.</p>
+          </div>
+        </div>
+
+        <div class="figure-card">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:var(--space-sm); margin-bottom:var(--space-sm);">
+            <div>
+              <div class="kpi-label">Visualisasi Proyeksi &amp; Tolok Ukur</div>
+              <h3 class="subsection-title" style="margin:0;" id="chart-landscape-title">Rencana Pembangkit RUKN 2060 (Total 443 GW)</h3>
+            </div>
+            <div style="display:flex; gap:var(--space-xs);">
+              <button type="button" class="btn btn-secondary btn-toggle active" onclick="switchLandscapeChart('rukn', this)">RUKN 2060</button>
+              <button type="button" class="btn btn-secondary btn-toggle" onclick="switchLandscapeChart('benchmark', this)">Tolok Ukur 2030</button>
+            </div>
+          </div>
+          <div class="chart-box">
+            <canvas id="landscapeChart"></canvas>
+          </div>
+          <p class="citation-note" id="chart-landscape-note">Sumber: Materi RUKN / Seminar DET ITB (2026) — DMN 2060 sebesar 443 GW terdiri dari 42% VRE (dengan storage 34 GW) dan 58% Non-VRE dispatchable.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- BAGIAN 02: PETA INTERAKTIF SPASIAL ENERGI INDONESIA -->
+    <section id="bagian-02" class="reveal-section">
+      <div class="dossier-bar">
+        <div class="dossier-bar-left">
+          <span class="dossier-pill">Bagian 02 · Fitur Utama</span>
+          <span class="dossier-meta">Peta Vektor Spasial · Ketimpangan Beban, REZ, Nusantara Supergrid &amp; EBT Perdesaan</span>
+        </div>
+        <span class="dossier-meta">Natural Earth 50m Vector</span>
+      </div>
+
+      <h2 class="section-title">Peta Interaktif Spasial Energi Indonesia: Pusat Beban Jawa–Bali vs Potensi Nusantara</h2>
+      <p class="standfirst">Ketidaksesuaian geografis antara lokasi sumber daya EBT (Kalimantan, Nusa Tenggara, Sumatera, Sulawesi, Papua) dan pusat permintaan listrik (Jawa–Bali) menuntut koordinasi koridor Supergrid, penetapan Renewable Energy Zones (REZ), dan penguatan pembangkit terdesentralisasi di desa.</p>
+
+      <div class="figure-card" style="margin-top: var(--space-lg);">
+        <div class="map-controls-bar">
+          <div class="control-group">
+            <label class="control-label" for="map-region-select">Fokus Wilayah Peta</label>
+            <select id="map-region-select" class="select-input" onchange="focusMapRegion(this.value)">
+              <option value="all">Seluruh Nusantara (Indonesia)</option>
+              <option value="jawabali">Jawa–Bali (Pusat Beban &amp; KEK)</option>
+              <option value="sumatera">Sumatera &amp; Selat Sunda</option>
+              <option value="kalimantan">Kalimantan (Hidro &amp; Koridor Transmisi)</option>
+              <option value="nusra">Nusa Tenggara &amp; Sulawesi (Potensi Surya/Hidro)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label">Lapisan Data Spasial</span>
+            <div style="display:flex; flex-wrap:wrap; gap:var(--space-xs);">
+              <button type="button" class="btn btn-secondary btn-toggle active" id="layer-btn-imbalance" onclick="toggleMapLayer('imbalance', this)">Pusat Beban &amp; Potensi</button>
+              <button type="button" class="btn btn-secondary btn-toggle active" id="layer-btn-rez" onclick="toggleMapLayer('rez', this)">Zona REZ &amp; KEK</button>
+              <button type="button" class="btn btn-secondary btn-toggle active" id="layer-btn-supergrid" onclick="toggleMapLayer('supergrid', this)">Nusantara Supergrid</button>
+              <button type="button" class="btn btn-secondary btn-toggle active" id="layer-btn-rural" onclick="toggleMapLayer('rural', this)">EBT Perdesaan &amp; Proyek</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-layout">
+          <div>
+            <div id="energy-map" aria-label="Peta interaktif ketimpangan spasial energi, zona REZ, jaringan Supergrid, dan sebaran EBT perdesaan di Indonesia"></div>
+            <div class="map-legend">
+              <span class="legend-item"><span class="legend-swatch swatch-load"></span> Pusat Beban Utama (~70% Konsumsi)</span>
+              <span class="legend-item"><span class="legend-swatch swatch-rez"></span> Zona REZ / Potensi EBT Tinggi</span>
+              <span class="legend-item"><span class="legend-swatch swatch-rural"></span> EBT Perdesaan / BUMDes / PLTMH</span>
+              <span class="legend-item"><span class="legend-swatch swatch-hydro"></span> PLTA / PLTS Skala Besar &amp; Laut</span>
+              <span class="legend-item"><span class="legend-swatch-line swatch-grid"></span> Koridor Rencana Supergrid (2031–2040)</span>
+            </div>
+            <p class="citation-note">Batas Wilayah: Natural Earth (domain publik). Sumber data spasial: Susandy (2026); Kementerian ESDM (2023–2026); INDEF (2025); IRENA (2017); Studi Kasus IBEKA &amp; Program MENTARI.</p>
+          </div>
+
+          <aside class="figure-card-compact inspector-panel" style="background:var(--surface-container);" id="map-inspector" aria-live="polite">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-xs); margin-bottom:var(--space-xs);">
+                <span class="tag-chip" id="map-insp-category">Ketimpangan Spasial Nasional</span>
+                <span class="index-num" id="map-insp-scale">MAKRO</span>
+              </div>
+              <h3 class="subsection-title" id="map-insp-title">Pilih Titik atau Koridor di Peta</h3>
+              <p id="map-insp-desc" style="margin:0; font-size:0.92rem;">Klik penanda atau garis transmisi pada peta untuk membaca detail kapasitas pembangkit, ketimpangan beban terhadap jaringan, skema kelembagaan, dan dokumen tata ruang yang mengaturnya.</p>
+            </div>
+
+            <div class="inspector-meta-grid">
+              <div>
+                <div class="inspector-kv-label">Kapasitas / Potensi</div>
+                <div class="inspector-kv-val" id="map-insp-cap">3.687 GW Nasional</div>
+              </div>
+              <div>
+                <div class="inspector-kv-label">Status / Target</div>
+                <div class="inspector-kv-val" id="map-insp-status">RUPTL &amp; RUKN 2060</div>
+              </div>
+              <div>
+                <div class="inspector-kv-label">Instrumen PWK</div>
+                <div class="inspector-kv-val" id="map-insp-pwk">RTRW, RDTR, RUED</div>
+              </div>
+              <div>
+                <div class="inspector-kv-label">Pengelola / Mitra</div>
+                <div class="inspector-kv-val" id="map-insp-actor">PLN, Pemda, IPP, BUMDes</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="kpi-label" style="margin-bottom:var(--space-xs);">Pintasan Cepat Studi Kasus Kunci</div>
+              <div style="display:flex; flex-wrap:wrap; gap:var(--space-xs);" id="map-quick-pins">
+                <button type="button" class="btn btn-secondary" style="min-height:36px; font-size:0.78rem;" onclick="inspectMapFeature('cirata')">PLTS Cirata (192 MWp)</button>
+                <button type="button" class="btn btn-secondary" style="min-height:36px; font-size:0.78rem;" onclick="inspectMapFeature('sumpur')">Pico-hydro Sumpur Kudus</button>
+                <button type="button" class="btn btn-secondary" style="min-height:36px; font-size:0.78rem;" onclick="inspectMapFeature('enggelam')">BUMDes Muara Enggelam</button>
+                <button type="button" class="btn btn-secondary" style="min-height:36px; font-size:0.78rem;" onclick="inspectMapFeature('kamanggih')">PLTMH Kamanggih (37 kW)</button>
+                <button type="button" class="btn btn-secondary" style="min-height:36px; font-size:0.78rem;" onclick="inspectMapFeature('mentarang')">PLTA Mentarang (1.375 MW)</button>
+                <button type="button" class="btn btn-secondary" style="min-height:36px; font-size:0.78rem;" onclick="inspectMapFeature('rez-ntt')">REZ NTT (432,67 GW Nusra)</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- BAGIAN 03: ANALISIS CORONG POTENSI EBT (3.687 GW VS REALISASI) -->
+    <section id="bagian-03" class="reveal-section">
+      <div class="dossier-bar">
+        <div class="dossier-bar-left">
+          <span class="dossier-pill">Bagian 03</span>
+          <span class="dossier-meta">Bab 1.3 &amp; Laporan IEEFA / LPEM · Jenjang Definisi Potensi</span>
+        </div>
+        <span class="dossier-meta">3.687 GW → Terpasang</span>
+      </div>
+
+      <h2 class="section-title">Analisis Corong Potensi EBT: Mengapa 3.687 GW Menyusut Tajam Sebelum Menjadi Listrik Nyata</h2>
+      <p class="standfirst">Angka potensi energi terbarukan sangat bergantung pada definisinya. Seorang perencana wilayah wajib memeriksa apakah angka yang dikutip masih berada pada tahap teoretis, teknis, ekonomis, atau sudah realistis mempertimbangkan tata ruang dan tarif.</p>
+
+      <div class="split-grid" style="margin-top: var(--space-lg);">
+        <div class="figure-card">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:var(--space-sm); margin-bottom:var(--space-md);">
+            <h3 class="subsection-title" style="margin:0;">Klik Jenjang Corong untuk Memeriksa Penyaringnya</h3>
+            <span class="tag-chip tag-chip-slate">Interaktif 4 Tahap</span>
+          </div>
+
+          <div class="funnel-stage-list">
+            <button type="button" class="funnel-stage-btn active" onclick="selectFunnelStage('teoretis', this)">
+              <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                <strong>01 · Potensi Teoretis (Fisik Alamiah)</strong>
+                <span class="index-num">Radiasi, Aliran, Gradien Suhu</span>
+              </div>
+              <div class="funnel-bar-track"><div class="funnel-bar-fill fill-teoretis"></div></div>
+              <span style="font-size:0.84rem; color:var(--on-surface-variant);">Seluruh energi fisik yang tersedia di permukaan kepulauan sebelum kendala efisiensi konversi.</span>
+            </button>
+
+            <button type="button" class="funnel-stage-btn" onclick="selectFunnelStage('teknis', this)">
+              <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                <strong>02 · Potensi Teknis Nasional</strong>
+                <span class="index-num">3.687 GW (ESDM / Susandy 2026)</span>
+              </div>
+              <div class="funnel-bar-track"><div class="funnel-bar-fill fill-teknis"></div></div>
+              <span style="font-size:0.84rem; color:var(--on-surface-variant);">Energi yang dapat dipanen dengan teknologi saat ini; didominasi surya, namun belum menyaring konflik lahan penuh.</span>
+            </button>
+
+            <button type="button" class="funnel-stage-btn" onclick="selectFunnelStage('ekonomis', this)">
+              <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                <strong>03 · Potensi Ekonomis (BPP &amp; Tarif)</strong>
+                <span class="index-num">Tersaring BPP &amp; Ceiling Tariff</span>
+              </div>
+              <div class="funnel-bar-track"><div class="funnel-bar-fill fill-ekonomis"></div></div>
+              <span style="font-size:0.84rem; color:var(--on-surface-variant);">Hanya proyek yang layak finansial terhadap BPP lokal dan aturan harga patokan tertinggi dua periode.</span>
+            </button>
+
+            <button type="button" class="funnel-stage-btn" onclick="selectFunnelStage('realistis', this)">
+              <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                <strong>04 · Potensi Realistis &amp; Realisasi Terpasang</strong>
+                <span class="index-num">Tersaring RTRW, Grid &amp; Permukaan Waduk</span>
+              </div>
+              <div class="funnel-bar-track"><div class="funnel-bar-fill fill-realistis"></div></div>
+              <span style="font-size:0.84rem; color:var(--on-surface-variant);">Kapasitas yang benar-benar lolos kawasan lindung, hak lintas transmisi, dan tata kelola lokal (mis. batas tutup waduk).</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:var(--space-lg);">
+          <aside class="figure-card" id="funnel-detail-card" aria-live="polite">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-xs);">
+              <span class="tag-chip" id="funnel-badge">Tahap 01 · Dasar Fisik</span>
+              <span class="index-num" id="funnel-metric">FISIKA SUMBER DAYA</span>
+            </div>
+            <h3 class="subsection-title" id="funnel-title">Potensi Teoretis: Total Energi Alamiah</h3>
+            <p id="funnel-desc" style="margin:0 0 var(--space-md) 0; font-size:0.94rem;">Mengukur total energi yang tiba di wilayah Indonesia — seperti seluruh radiasi matahari di daratan dan laut, total energi potensial seluruh aliran sungai, atau panas bumi di sepanjang cincin api. Angka ini terlalu besar untuk dijadikan dasar perencanaan investasi infrastruktur.</p>
+            <div class="aside-box" style="border-radius:var(--rounded);">
+              <div class="kpi-label">Faktor Penyusutan &amp; Catatan Kritis PWK</div>
+              <p id="funnel-filter" style="margin:0; font-size:0.86rem;">Kesalahan umum dalam diskusi kebijakan adalah mengutip potensi teoretis atau teknis seolah-olah seluruhnya siap dibangun di atas lahan datar tanpa hutan lindung, sawah produktif, maupun permukiman.</p>
+            </div>
+          </aside>
+
+          <div class="figure-card">
+            <div class="kpi-label">Distribusi Potensi Teknis Terpilih &amp; PLTS Terapung</div>
+            <h3 class="subsection-title" style="margin-bottom:var(--space-sm);">Ketimpangan Regional vs Kebutuhan Lahan</h3>
+            <div class="chart-box" style="min-height:240px; height:250px;">
+              <canvas id="funnelChart"></canvas>
+            </div>
+            <p class="citation-note">Catatan: PLTS terapung nasional berpotensi 89,36 GW di 295 danau/waduk tanpa menyita sawah, namun dibatasi tata kelola permukaan air (perikanan keramba, pariwisata, kualitas air).</p>
+          </div>
+        </div>
+      </div>
+
+      <details class="dossier-details">
+        <summary>
+          <span>Pendalaman Regulasi Tarif: Mengapa Jawa–Bali–Sumatera Kurang Menarik bagi Investor EBT Dibanding Wilayah Diesel Terpencil?</span>
+          <span class="tag-chip">IEEFA &amp; LPEM UI</span>
+        </summary>
+        <div style="margin-top:var(--space-md); display:grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap:var(--space-md);">
+          <div>
+            <p style="margin:0; font-size:0.9rem;"><strong>1. Efek Biaya Pokok Penyediaan (BPP) &amp; Dominasi Batu Bara:</strong> Berdasarkan analisis LPEM FEB UI, regulasi tarif yang mengacu pada BPP lokal membuat wilayah terpencil yang didominasi pembangkit diesel (BPP tinggi) secara teoretis menawarkan tarif lebih tinggi bagi pengembang EBT. Sebaliknya, di Jawa, Sumatera, dan Bali, dominasi batu bara murah menekan BPP lokal sehingga tarif EBT menjadi kurang menarik secara komersial — padahal di wilayah terpencil pun permintaan listrik rendah dan PLN menilai investasi terpisah sering tidak ekonomis.</p>
+          </div>
+          <div>
+            <p style="margin:0; font-size:0.9rem;"><strong>2. Struktur Tarif Patokan Tertinggi Dua Periode (IEEFA, 2024):</strong> Pemerintah menerapkan tarif batas atas bertahap: lebih tinggi pada periode pertama (tahun 1–10) untuk menutup utang IPP, lalu turun hampir 50% pada periode kedua (tahun 11–30). Tantangannya, tenor pinjaman proyek kerap melampaui 10 tahun dan tarif tidak memperhitungkan inflasi biaya operasional jangka panjang, sehingga menekan <em>potensi ekonomis</em> di lapangan.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- BAGIAN 04: ANALISIS JARINGAN INTERAKTIF (NETWORK ANALYSIS) -->
+    <section id="bagian-04" class="reveal-section">
+      <div class="dossier-bar">
+        <div class="dossier-bar-left">
+          <span class="dossier-pill">Bagian 04 · Fitur Utama</span>
+          <span class="dossier-meta">Analisis Jaringan Spasial (Network Analysis) · 22 Simpul &amp; Keterkaitan Lintas Sektor</span>
+        </div>
+        <span class="dossier-meta">D3.js Force-Anchored Graph</span>
+      </div>
+
+      <h2 class="section-title">Peta Keterkaitan Konsep, Instrumen Tata Ruang, Pemodelan, dan Kelembagaan PWK</h2>
+      <p class="standfirst">Transisi energi dalam PWK tidak bekerja dalam sekat sektoral. Studi bibliometrik kota berkelanjutan dan analisis klaster menunjukkan interaksi erat antara kebijakan lingkungan, perencanaan tata guna lahan, integrasi teknologi EBT, pemodelan spasial-energi, serta partisipasi komunitas desa melalui BUMDes.</p>
+
+      <div class="figure-card" style="margin-top: var(--space-lg);">
+        <div class="map-controls-bar">
+          <div class="control-group">
+            <label class="control-label" for="net-node-select">Pilih Simpul Langsung (Akses Cepat)</label>
+            <select id="net-node-select" class="select-input" onchange="selectNetworkNodeById(this.value)">
+              <option value="">— Semua Simpul (Klik simpul di grafik) —</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label">Saring Klaster Topik</span>
+            <div style="display:flex; flex-wrap:wrap; gap:var(--space-xs);">
+              <button type="button" class="btn btn-secondary btn-toggle active" onclick="filterNetworkCluster('all', this)">Semua Klaster</button>
+              <button type="button" class="btn btn-secondary btn-toggle" onclick="filterNetworkCluster('ruang', this)">Energi &amp; Ruang</button>
+              <button type="button" class="btn btn-secondary btn-toggle" onclick="filterNetworkCluster('instrumen', this)">Instrumen Tata Ruang</button>
+              <button type="button" class="btn btn-secondary btn-toggle" onclick="filterNetworkCluster('teknologi', this)">Tipologi Teknologi</button>
+              <button type="button" class="btn btn-secondary btn-toggle" onclick="filterNetworkCluster('model', this)">Pemodelan Spasial</button>
+              <button type="button" class="btn btn-secondary btn-toggle" onclick="filterNetworkCluster('lembaga', this)">Kelembagaan &amp; BUMDes</button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label">Tata Letak</span>
+            <button type="button" class="btn btn-secondary" onclick="resetNetworkView()">Atur Ulang Grafik</button>
+          </div>
+        </div>
+
+        <div class="network-layout">
+          <div>
+            <div id="network-canvas-wrap">
+              <svg id="network-svg" role="img" aria-label="Grafik analisis jaringan interaktif hubungan konsep energi, instrumen tata ruang, teknologi EBT, pemodelan spasial, dan kelembagaan BUMDes"></svg>
+            </div>
+            <div class="map-legend">
+              <span class="legend-item"><span class="legend-swatch" style="background: var(--data-1);"></span> Konsep Energi &amp; Ruang</span>
+              <span class="legend-item"><span class="legend-swatch" style="background: var(--data-4);"></span> Instrumen (RTRW, RDTR, RUED, RUPTL)</span>
+              <span class="legend-item"><span class="legend-swatch" style="background: var(--data-2);"></span> Tipologi Teknologi EBT</span>
+              <span class="legend-item"><span class="legend-swatch" style="background: var(--data-5);"></span> Pemodelan (HOMER, LEAP, GIS, LQ)</span>
+              <span class="legend-item"><span class="legend-swatch" style="background: var(--data-3);"></span> Kelembagaan (BUMDes, REZ, IBEKA)</span>
+            </div>
+          </div>
+
+          <aside class="figure-card-compact inspector-panel" style="background:var(--surface-container);" id="network-inspector" aria-live="polite">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-xs); margin-bottom:var(--space-xs);">
+                <span class="tag-chip" id="net-insp-cluster">Ikhtisar Topologi Jaringan</span>
+                <span class="index-num" id="net-insp-deg">22 SIMPUL · 34 TAUTAN</span>
+              </div>
+              <h3 class="subsection-title" id="net-insp-title">Klik atau Seret Simpul pada Grafik</h3>
+              <p id="net-insp-desc" style="margin:0; font-size:0.92rem;">Jaringan ini memetakan bagaimana konsep teoretis energi sebagai sistem keruangan terhubung ke instrumen hukum PWK (RTRW, RDTR, RUED, RUPTL), teknologi pembangkit, alat pemodelan spasial-energi (HOMER, LEAP, PyPSA, GIS), hingga pelaksana akar rumput seperti BUMDes.</p>
+            </div>
+
+            <div style="border-top: var(--card-border); padding-top: var(--space-sm);">
+              <div class="kpi-label" style="margin-bottom:var(--space-xs);">Simpul Terhubung Langsung</div>
+              <div id="net-insp-neighbors" style="display:flex; flex-wrap:wrap; gap:var(--space-xs);">
+                <button type="button" class="btn btn-secondary" style="min-height:34px; font-size:0.78rem;" onclick="selectNetworkNodeById('rtrw')">RTRW &amp; Zonasi</button>
+                <button type="button" class="btn btn-secondary" style="min-height:34px; font-size:0.78rem;" onclick="selectNetworkNodeById('rez')">Zona REZ &amp; KEK</button>
+                <button type="button" class="btn btn-secondary" style="min-height:34px; font-size:0.78rem;" onclick="selectNetworkNodeById('bumdes')">BUMDes Energi</button>
+                <button type="button" class="btn btn-secondary" style="min-height:34px; font-size:0.78rem;" onclick="selectNetworkNodeById('homer')">HOMER / LEAP / GIS</button>
+              </div>
+            </div>
+
+            <div class="aside-box" style="margin-top:auto; border-radius:var(--rounded);">
+              <div class="kpi-label">Temuan Analisis Klaster</div>
+              <p id="net-insp-insight" style="margin:0; font-size:0.85rem;">Kajian bibliometrik 1990–2021 mencatat lonjakan 75% publikasi energi terbarukan &amp; kota berkelanjutan pada 2018–2021 dengan kata kunci dominan: <em>system, management, city, optimization, design, renewable energy</em>.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- BAGIAN 05: LABORATORIUM KUANTITATIF & TEKNOLOGI TEPAT GUNA -->
+    <section id="bagian-05" class="reveal-section">
+      <div class="dossier-bar">
+        <div class="dossier-bar-left">
+          <span class="dossier-pill">Bagian 05</span>
+          <span class="dossier-meta">Bab 1.5 &amp; 1.6 · Faktor Kapasitas, Batas LCOE &amp; Penilaian Teknologi Tepat Guna</span>
+        </div>
+        <span class="dossier-meta">Simulasi &amp; Studi Kasus</span>
+      </div>
+
+      <h2 class="section-title">Membandingkan Teknologi: Faktor Kapasitas, Batas LCOE, dan Kacamata Teknologi Tepat Guna</h2>
+      <p class="standfirst">Efisiensi tinggi dan skala raksasa tidak otomatis menjadikan suatu teknologi tepat guna. Perencana wilayah perlu menguasai metrik teknik-ekonomi dasar (CF dan LCOE) sekaligus mengenali batasannya terhadap biaya sistem jaringan dan kesiapan komunitas pengelola.</p>
+
+      <!-- Interactive CF & LCOE Calculator -->
+      <div class="figure-card" style="margin-top: var(--space-lg);">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:var(--space-md); border-bottom:var(--card-border); padding-bottom:var(--space-md); margin-bottom:var(--space-md);">
+          <div>
+            <span class="index-num">KALKULATOR ANALITIK BAB 1.5</span>
+            <h3 class="subsection-title" style="margin: var(--space-xs) 0 0 0;">Simulator Faktor Kapasitas (CF) &amp; LCOE Sederhana</h3>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:var(--space-xs);">
+            <button type="button" class="btn btn-secondary" style="min-height:38px; font-size:0.8rem;" onclick="loadCalcPreset('latihan')">Preset: Soal Bab 1 (5 MWp)</button>
+            <button type="button" class="btn btn-secondary" style="min-height:38px; font-size:0.8rem;" onclick="loadCalcPreset('cirata')">Preset: PLTS Cirata (192 MWp)</button>
+            <button type="button" class="btn btn-secondary" style="min-height:38px; font-size:0.8rem;" onclick="loadCalcPreset('kamanggih')">Preset: PLTMH Kamanggih (37 kW)</button>
+            <button type="button" class="btn btn-secondary" style="min-height:38px; font-size:0.8rem;" onclick="loadCalcPreset('mentarang')">Preset: PLTA Mentarang (1.375 MW)</button>
+          </div>
+        </div>
+
+        <div class="calc-grid">
+          <div>
+            <div class="slider-row">
+              <label class="control-label" for="input-cap-mw">Kapasitas Terpasang (MW atau MWp)</label>
+              <div class="slider-controls">
+                <input type="range" id="slider-cap-mw" min="0.01" max="1500" step="0.1" value="5" oninput="syncCapFromSlider(this.value)">
+                <input type="number" id="input-cap-mw" class="num-input" min="0.01" max="2000" step="0.01" value="5" oninput="syncCapFromNumber(this.value)">
+              </div>
+            </div>
+
+            <div class="slider-row">
+              <label class="control-label" for="input-gen-mwh">Produksi Energi Tahunan (MWh / tahun)</label>
+              <div class="slider-controls">
+                <input type="range" id="slider-gen-mwh" min="10" max="6000000" step="100" value="7000" oninput="syncGenFromSlider(this.value)">
+                <input type="number" id="input-gen-mwh" class="num-input" min="1" max="10000000" step="10" value="7000" oninput="syncGenFromNumber(this.value)">
+              </div>
+            </div>
+
+            <div class="slider-row">
+              <label class="control-label" for="input-capex">Biaya Investasi Awal / CAPEX (USD / kW)</label>
+              <div class="slider-controls">
+                <input type="range" id="slider-capex" min="500" max="4500" step="50" value="1100" oninput="syncCapexFromSlider(this.value)">
+                <input type="number" id="input-capex" class="num-input" min="200" max="10000" step="50" value="1100" oninput="syncCapexFromNumber(this.value)">
+              </div>
+            </div>
+
+            <div class="slider-row" style="margin-bottom:0;">
+              <label class="control-label" for="input-life">Umur Ekonomi Pembangkit (Tahun)</label>
+              <div class="slider-controls">
+                <input type="range" id="slider-life" min="10" max="40" step="1" value="25" oninput="syncLifeFromSlider(this.value)">
+                <input type="number" id="input-life" class="num-input" min="5" max="50" step="1" value="25" oninput="syncLifeFromNumber(this.value)">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="output-banner">
+              <div class="kpi-label" id="calc-preset-label">Skenario Aktif: Latihan Uji Mandiri Bab 1 (PLTS 5 MWp)</div>
+              <div class="output-grid" style="margin-top:var(--space-sm);">
+                <div>
+                  <div class="kpi-label">Faktor Kapasitas (CF)</div>
+                  <div class="kpi-value" id="out-cf" style="color:var(--secondary);">15,98%</div>
+                  <div class="kpi-sub" id="out-cf-compare">Cirata 192 MWp = 14,57% (245 GWh/thn)</div>
+                </div>
+                <div>
+                  <div class="kpi-label">Estimasi LCOE Sederhana</div>
+                  <div class="kpi-value" id="out-lcoe" style="color:var(--tertiary);">6,83 ¢/kWh</div>
+                  <div class="kpi-sub">Asumsi bunga diskonto 7%, O&amp;M 2%/thn</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="aside-box" style="border-radius:var(--rounded);">
+              <div class="kpi-label" style="color:var(--data-4);">Dua Keterbatasan Kritis LCOE bagi Perencana PWK</div>
+              <ul style="margin:var(--space-xs) 0 0 0; padding-left:1.2rem; font-size:0.88rem; display:flex; flex-direction:column; gap:var(--space-xs);">
+                <li><strong>Mengabaikan Biaya Sistem &amp; Ruang Transmisi:</strong> LCOE hanya menghitung biaya di pagar pembangkit (<em>plant-gate</em>). Pembangkit surya atau angin ber-LCOE rendah di lokasi terpencil tetap memicu biaya besar jika membutuhkan koridor transmisi baru (Supergrid) atau baterai penyimpanan (<em>storage</em>).</li>
+                <li><strong>Mengabaikan Nilai Waktu &amp; Dispatchability:</strong> LCOE menyamakan 1 kWh listrik intermiten siang hari dengan 1 kWh listrik beban puncak malam hari atau PLTA/panas bumi yang dapat diatur (<em>dispatchable</em>).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appropriate Technology Comparison Matrix -->
+      <div style="margin-top: var(--space-xl);">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:end; gap:var(--space-md); margin-bottom:var(--space-md);">
+          <div>
+            <span class="index-num">TIPOLOGI TEKNOLOGI TEPAT GUNA (SCHUMACHER, 1973 &amp; BAB 1.6)</span>
+            <h3 class="subsection-title" style="margin:var(--space-xs) 0 0 0;">Siapa yang Membiayai, Mengoperasikan, dan Merawatnya?</h3>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="ttg-filter">Saring Skala Tata Kelola</label>
+            <select id="ttg-filter" class="select-input" onchange="filterTtgTable(this.value)">
+              <option value="all">Semua Skala (Komunitas hingga Utilitas Nasional)</option>
+              <option value="komunitas">Berbasis Komunitas &amp; BUMDes</option>
+              <option value="rezim">Skala Utilitas &amp; Rezim Grid Nasional</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Studi Kasus &amp; Lokasi</th>
+                <th>Kapasitas</th>
+                <th>Pengguna &amp; Wujud Fisik</th>
+                <th>Skema Biaya &amp; Perawatan</th>
+                <th>Dokumen Rencana PWK</th>
+              </tr>
+            </thead>
+            <tbody id="ttg-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- BAGIAN 06: INTEGRASI KEBIJAKAN SPASIAL MULTISKALA -->
+    <section id="bagian-06" class="reveal-section">
+      <div class="dossier-bar">
+        <div class="dossier-bar-left">
+          <span class="dossier-pill">Bagian 06</span>
+          <span class="dossier-meta">Sintesis Kebijakan · REZ, Kota Berkelanjutan, District Energy &amp; BUMDes</span>
+        </div>
+        <span class="dossier-meta">Arah Implementasi PWK</span>
+      </div>
+
+      <h2 class="section-title">Integrasi Kebijakan Spasial Multiskala: Dari Koridor Industri REZ hingga Desa Mandiri Energi</h2>
+      <p class="standfirst">Mengatasi ketimpangan spasial energi Indonesia membutuhkan keselarasan lintas skala: penyatuan otoritas koridor di tingkat provinsi/nasional, pemanfaatan tata guna lahan di tingkat kota, dan payung hukum yang jelas bagi BUMDes di tingkat akar rumput.</p>
+
+      <div class="card-grid-3" style="margin-top: var(--space-lg);">
+        <article class="figure-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-sm);">
+            <span class="tag-chip tag-chip-slate">Skala Koridor &amp; Industri</span>
+            <span class="index-num">01 · REZ &amp; KEK/SEZ</span>
+          </div>
+          <h3 class="subsection-title">Menyelaraskan RUPTL, RTRW, dan Kawasan Industri</h3>
+          <p style="font-size:0.92rem;">Menurut analisis INDEF (2025) dan Bank Dunia, zonasi spasial yang efektif bertumpu pada tiga elemen: <strong>institusi yang menyatukan</strong> (steering layer lintas PLN–ESDM–ATR/BPN–Kemenkeu–PT PII), <strong>infrastruktur yang menghubungkan</strong> (koridor transmisi bersama), dan <strong>intervensi terarah</strong>.</p>
+          <p style="font-size:0.92rem; margin-bottom:0;">Indonesia dapat mengadaptasi KEK/SEZ (seperti Batang, Gresik, dan Kalimantan Utara) menjadi klaster industri hijau berbasis REZ, belajar dari model <strong>NSW Central-West Orana</strong> (Australia — EnergyCo sebagai perencana tunggal dan kontrak LTESA untuk pipeline 4,5 GW) serta <strong>Sarawak SCORE</strong> (Malaysia — otoritas koridor RECODA berbasis hidro ~4,6 GW yang menarik investasi besar).</p>
+        </article>
+
+        <article class="figure-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-sm);">
+            <span class="tag-chip">Skala Perkotaan</span>
+            <span class="index-num">02 · KOTA &amp; DISTRICT ENERGY</span>
+          </div>
+          <h3 class="subsection-title">Tata Guna Lahan, Peta Panas Spasial, &amp; Aset Publik</h3>
+          <p style="font-size:0.92rem;">Laporan kota energi distrik global mencatat bahwa <strong>43 dari 45 Champion Cities</strong> memanfaatkan kebijakan perencanaan dan regulasi tata guna lahan untuk mempercepat transisi energi, sementara <strong>55% menggunakan peta panas spasial</strong> (<em>spatial heat maps</em>) guna mengoptimalkan desain jaringan.</p>
+          <p style="font-size:0.92rem; margin-bottom:0;">Ketika pemerintah daerah tidak memiliki kewenangan penuh atas utilitas listrik nasional, kota tetap dapat bertindak melalui RDTR: menetapkan syarat efisiensi bangunan, memadukan energi surya dengan ruang terbuka hijau kota (standar minimal 85% vegetasi taman kota dalam Permen ATR/BPN No. 14/2022), dan menjadikan gedung publik sebagai <em>anchor load</em> proyek percontohan.</p>
+        </article>
+
+        <article class="figure-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-sm);">
+            <span class="tag-chip tag-chip-pine">Skala Desa &amp; Akar Rumput</span>
+            <span class="index-num">03 · BUMDES ENERGI BERSIH</span>
+          </div>
+          <h3 class="subsection-title">Kepastian Hukum &amp; Kapasitas Operator Lokal</h3>
+          <p style="font-size:0.92rem;">Pengalaman <strong>PLTS Komunal Muara Enggelam</strong> (BUMDes Bersinar Desaku), <strong>Program MENTARI di Desa Mata Redi</strong> (Sumba Tengah), dan <strong>PLTMH Kamanggih</strong> (Sumba Timur) membuktikan desa dapat menjadi ujung tombak ketahanan energi sekaligus penggerak UMKM (seperti Program Desa Energi Berdikari di Tuban, Semarang, dan Bali).</p>
+          <p style="font-size:0.92rem; margin-bottom:0;">Namun studi hukum energi desa (merujuk teori Lawrence M. Friedman: <em>substansi, struktur, budaya hukum</em>) menekankan perlunya pengaturan eksplisit dalam undang-undang agar peran BUMDes mengelola energi bersih kokoh secara hukum positif—dibarengi pelatihan operator desa dan dana pemeliharaan mandiri (seperti pelajaran kasus Marubay dan IBEKA) agar fasilitas tidak terbengkalai saat rusak.</p>
+        </article>
+      </div>
+
+      <!-- Synthesis Checklist / Reflection -->
+      <div class="aside-box" style="margin-top: var(--space-xl); border-radius: var(--rounded-lg);">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:var(--space-sm); margin-bottom:var(--space-sm);">
+          <span class="index-num">TUJUH PESAN KUNCI BAGI PERENCANA WILAYAH DAN KOTA</span>
+          <span class="tag-chip tag-chip-slate">Rangkuman Bab 1</span>
+        </div>
+        <ol style="margin:0; padding-left:1.3rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap:var(--space-sm) var(--space-xl); font-size:0.92rem;">
+          <li><strong>Energi adalah sistem keruangan:</strong> setiap simpul tambang, pelabuhan, pembangkit, transmisi, dan atap permukiman diatur RTRW/RDTR.</li>
+          <li><strong>Alasan transisi yang terukur:</strong> ketergantungan impor, emisi, beban fiskal, dan keandalan pasokan — bukan klaim sederhana “minyak habis”.</li>
+          <li><strong>Baca angka potensi dengan kritis:</strong> bedakan potensi teoretis, teknis (3.687 GW), ekonomis, dan realistis.</li>
+          <li><strong>Cermati label “EBT”:</strong> pisahkan energi terbarukan sejati dari energi baru berbasis fosil seperti gasifikasi batu bara.</li>
+          <li><strong>LCOE tidak berdiri sendiri:</strong> perhitungkan biaya jaringan (Supergrid), penyimpanan (<em>storage</em>), dan waktu beban puncak.</li>
+          <li><strong>Teknologi tepat guna bersifat kontekstual:</strong> dinilai dari siapa yang mampu membiayai, mengoperasikan, dan merawatnya.</li>
+          <li><strong>Hambatan biaya &amp; penyimpanan menyusut cepat:</strong> membuka peluang integrasi REZ industri dan kemandirian energi desa.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- FOOTER SOURCES -->
+    <footer style="border-top: var(--section-rule); padding-top: var(--space-lg); color: var(--on-surface-variant); font-size: 0.85rem;">
+      <div class="dossier-bar" style="border-bottom: none; margin-bottom: var(--space-xs); padding-bottom: 0;">
+        <span class="index-num">SUMBER RUJUKAN UTAMA DOSSIER</span>
+      </div>
+      <p style="margin:0; line-height:1.6;">
+        Disusun dan disintesis dari bahan ajar <em>Bab 1: Energi, Wilayah, dan Transisi</em> (Perencanaan Pertanian dan Teknologi Terbarukan GCC332, PWK Universitas Islam Bandung, 2026) serta diperkaya oleh dokumen kebijakan dan riset: Rencana Umum Energi Nasional (RUEN), Rencana Pengembangan Pembangkit RUKN 2060 (Seminar DET ITB, 2026), Laporan INDEF <em>Advancing Indonesia’s Industrial Energy Transition: The Role of Renewable Energy Zones</em> (2025), Laporan IEEFA <em>Unlocking Indonesia’s Renewable Energy Investment Potential</em> (2024), LPEM FEB UI Working Paper 052, IRENA <em>REmap Indonesia</em> (2017), <em>Implementation Check: Renewable Energy Development in Indonesia</em> (2024), UNEP <em>District Energy in Cities</em>, kajian bibliometrik Kota Berkelanjutan &amp; Energi Terbarukan, regulasi BUMDes EBT &amp; Program MENTARI/IBEKA, serta literatur pemodelan energi bawah-ke-atas.
+      </p>
+    </footer>
+
+  </main>
+
+  <script>
+    // Helper to read CSS tokens from :root so JS charts/maps never hardcode hex colors
+    function cssToken(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    // =========================================================================
+    // 1. BAGIAN 01: 4 ALASAN TRANSISI & RANTAI KERUANGAN
+    // =========================================================================
+    const REASONS_DATA = {
+      impor: {
+        tag: `Alasan Teruji · Data Resmi`,
+        code: `01 / 04`,
+        title: `Ketergantungan Impor BBM dan LPG`,
+        body: `Produksi minyak domestik dari sumur tua terus menurun sementara konsumsi transportasi dan rumah tangga naik. Dalam Rencana Umum Energi Nasional (RUEN), pasokan LPG sangat bertumpu pada impor. Gejolak harga global dan kurs langsung menjalar ke SPBU (kenaikan Pertalite Rp7.650 ke Rp10.000/liter pada 3 September 2022) dan antrean LPG 3 kg pada 1 Februari 2025.`,
+        pwk: `Merancang kota kompak berorientasi angkutan umum (mengurangi permintaan BBM per kapita sebagaimana studi Newman & Kenworthy) serta memfasilitasi substitusi LPG melalui jaringan listrik bersih di RDTR permukiman.`
+      },
+      emisi: {
+        tag: `Kesehatan Publik & Iklim`,
+        code: `02 / 04`,
+        title: `Emisi Karbon dan Polusi Udara Perkotaan`,
+        body: `Langit kelabu Jakarta dan kawasan industri perkotaan berakar dari dominasi pembangkit batu bara di sekitar pusat beban Jawa serta emisi transportasi fosil. Dalam kerangka IPCC AR6, bentuk kota (urban form) menjadi penentu utama konsumsi energi dan emisi sektor perkotaan.`,
+        pwk: `Memadukan koridor RTH berkualitas (minimal 85% tutupan vegetasi taman kota sesuai Permen ATR/BPN No. 14/2022), zona rendah emisi, dan integrasi PLTS atap serta transportasi publik listrik dalam rencana tata ruang kota.`
+      },
+      fiskal: {
+        tag: `Ketahanan Anggaran Publik`,
+        code: `03 / 04`,
+        title: `Beban Fiskal Subsidi Energi Fosil`,
+        body: `Subsidi BBM, LPG 3 kg, dan listrik menyedot porsi besar APBN setiap kali harga energi dunia melonjak. Sementara itu, margin kas utilitas tertekan oleh skema subsidi tarif listrik (TDL), membatasi ruang fiskal untuk membangun infrastruktur jaringan transmisi baru yang dibutuhkan EBT.`,
+        pwk: `Mengalihkan subsidi energi fosil secara bertahap (sesuai mandat strategi harga energi RUEN) menjadi dukungan penjaminan pemerintah (PT PII/PT SMI) dan infrastruktur dasar dalam kerangka KPBU serta REZ.`
+      },
+      keandalan: {
+        tag: `Geografi Kepulauan`,
+        code: `04 / 04`,
+        title: `Keandalan Pasokan di Negara Kepulauan`,
+        body: `Indonesia terdiri atas lebih dari 17.500 pulau dengan rantai pasok BBM dan batu bara lintas laut yang panjang. Wilayah luar Jawa sering bergantung pada pembangkit diesel berbiaya pokok (BPP) mahal yang rentan gangguan cuaca dan logistik pelayaran.`,
+        pwk: `Mendorong pemanfaatan sumber daya lokal (mikrohidro, surya komunal BUMDes, hibrida surya-hidro) agar desa dan pulau kecil menjadi mandiri energi sekaligus mengurangi risiko rantai pasok terpusat.`
+      }
+    };
+
+    function selectReason(key, btnEl) {
+      const data = REASONS_DATA[key];
+      if (!data) return;
+
+      const allBtns = document.querySelectorAll('.reason-card');
+      allBtns.forEach(function(b) { b.classList.remove('active'); });
+      if (btnEl) btnEl.classList.add('active');
+
+      const tagEl = document.getElementById('reason-tag');
+      const codeEl = document.getElementById('reason-code');
+      const titleEl = document.getElementById('reason-detail-title');
+      const bodyEl = document.getElementById('reason-detail-body');
+      const pwkEl = document.getElementById('reason-detail-pwk');
+
+      if (tagEl) tagEl.textContent = data.tag;
+      if (codeEl) codeEl.textContent = data.code;
+      if (titleEl) titleEl.textContent = data.title;
+      if (bodyEl) bodyEl.textContent = data.body;
+      if (pwkEl) pwkEl.textContent = data.pwk;
+    }
+
+    const CHAINS_DATA = {
+      listrik: {
+        summary: `Sistem kelistrikan batu bara eksisting membentang ratusan hingga ribuan kilometer dari tambang Kalimantan ke pusat beban perkotaan di Jawa.`,
+        nodes: [
+          { step: `Simpul 01 · Hulu`, title: `Tambang Batu Bara`, loc: `Kalimantan & Sumatera`, pwk: `RTRW: Kawasan Peruntukan Pertambangan` },
+          { step: `Simpul 02 · Logistik`, title: `Angkutan Tongkang`, loc: `Alur Laut Jawa`, pwk: `RTRW/RZWP3K: Alur Pelayaran & Pelabuhan` },
+          { step: `Simpul 03 · Konversi`, title: `PLTU Skala Besar`, loc: `Suralaya, Banten & Pesisir Jawa`, pwk: `RTRW: Kawasan Pembangkit & Industri` },
+          { step: `Simpul 04 · Transmisi`, title: `Koridor SUTET 500 kV`, loc: `Lintas Kabupaten Jawa`, pwk: `Peraturan Zonasi: Ruang Bebas SUTET` },
+          { step: `Simpul 05 · Hilir`, title: `Rumah & Industri`, loc: `Kawasan Perkotaan & KEK`, pwk: `RDTR: Kepadatan, Intensitas & KDB` }
+        ]
+      },
+      lpg: {
+        summary: `Rantai pasok LPG rumah tangga mengandalkan kapal tanker impor melalui pelabuhan khusus sebelum menjangkau ratusan ribu pangkalan di permukiman.`,
+        nodes: [
+          { step: `Simpul 01 · Impor`, title: `Kapal Tanker Impor`, loc: `Jalur Pelayaran Internasional`, pwk: `Tata Ruang Laut: Alur Pelayaran Energi` },
+          { step: `Simpul 02 · Bongkar`, title: `Terminal LPG`, loc: `Kawasan Pelabuhan`, pwk: `RTRW: Zona Pelabuhan & Keselamatan` },
+          { step: `Simpul 03 · Pengisian`, title: `SPBE (Stasiun Pengisian)`, loc: `Kawasan Industri / Pinggiran Kota`, pwk: `RDTR: Zona Industri & Pergudangan` },
+          { step: `Simpul 04 · Distribusi`, title: `Pangkalan & 375 rb Sub-Pangkalan`, loc: `Koridor Jalan & Lingkungan`, pwk: `RDTR: Zona Perdagangan & Jasa Lokal` },
+          { step: `Simpul 05 · Konsumsi`, title: `Dapur Rumah Tangga`, loc: `Permukiman Padat & Desa`, pwk: `Transisi ke Kompor Induksi / Jargas` }
+        ]
+      },
+      ebt: {
+        summary: `Transisi energi menggeser lokasi, jalur, dan jejak lahan: surya dan angin membutuhkan ruang luas atau pemanfaatan atap serta permukaan waduk dekat konsumen.`,
+        nodes: [
+          { step: `Simpul 01 · Sumber Lokal`, title: `Zona REZ Surya / Hidro / Angin`, loc: `Nusra, Kaltara, Sulawesi, Waduk`, pwk: `RTRW: Pra-Zonasi REZ & Lindung` },
+          { step: `Simpul 02 · Penyeimbang`, title: `Penyimpanan (BESS / PHS)`, loc: `Gardu Induk & Waduk Hibrida`, pwk: `Integrasi RUPTL & Tata Guna Lahan` },
+          { step: `Simpul 03 · Interkoneksi`, title: `Nusantara Supergrid`, loc: `Sumatera–Jawa (2031), Kal–Jawa (2040)`, pwk: `Koridor Kabel Laut & Darat Lintas Provinsi` },
+          { step: `Simpul 04 · Klaster Industri`, title: `KEK Hijau & Smart Microgrid`, loc: `Batang, Gresik, Kaltara`, pwk: `Aglomerasi Industri-Energi (PPA Hijau)` },
+          { step: `Simpul 05 · Terdesentralisasi`, title: `Atap Kota & BUMDes Energi`, loc: `RDTR Perkotaan & Desa Terpencil`, pwk: `RDTR Atap Surya & Perdes BUMDes` }
+        ]
+      }
+    };
+
+    function selectChain(key, btnEl) {
+      const data = CHAINS_DATA[key];
+      if (!data) return;
+
+      const btns = document.querySelectorAll('#bagian-01 .btn-toggle');
+      btns.forEach(function(b) { b.classList.remove('active'); });
+      if (btnEl) btnEl.classList.add('active');
+
+      const summaryEl = document.getElementById('chain-summary');
+      const containerEl = document.getElementById('chain-flow-container');
+      if (summaryEl) summaryEl.textContent = data.summary;
+      if (containerEl) {
+        containerEl.innerHTML = data.nodes.map(function(n) {
+          return `<div class="chain-node">
+            <span class="chain-step">${n.step}</span>
+            <span class="chain-title">${n.title}</span>
+            <span class="chain-loc">${n.loc}</span>
+            <span class="chain-pwk">${n.pwk}</span>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    // Chart 1: Landscape 2026 (RUKN 2060 vs 2030 1.5C Benchmark)
+    let landscapeChartInstance = null;
+
+    function renderLandscapeChart(mode) {
+      const canvas = document.getElementById('landscapeChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      const ctx = canvas.getContext('2d');
+      if (landscapeChartInstance) {
+        landscapeChartInstance.destroy();
+      }
+
+      const titleEl = document.getElementById('chart-landscape-title');
+      const noteEl = document.getElementById('chart-landscape-note');
+      const c1 = cssToken('--data-1');
+      const c2 = cssToken('--data-2');
+      const c3 = cssToken('--data-3');
+      const c4 = cssToken('--data-4');
+      const c5 = cssToken('--data-5');
+      const cCtx = cssToken('--data-context');
+
+      if (mode === 'rukn') {
+        if (titleEl) titleEl.textContent = `Rencana Pengembangan Pembangkit RUKN 2060 (443 GW)`;
+        if (noteEl) noteEl.textContent = `Sumber: Materi RUKN / Seminar DET ITB (2026). DMN 2060 sebesar 443 GW mencakup 42% VRE dengan storage 34 GW dan 58% Non-VRE dispatchable, didukung super grid.`;
+
+        landscapeChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: [`Surya`, `Angin`, `Hidro`, `Hidrogen (H2)`, `Laut`, `Storage (VRE)`, `Non-VRE & Lainnya`],
+            datasets: [{
+              label: `Kapasitas Rencana (GW)`,
+              data: [109, 73, 71, 25, 1, 34, 130],
+              backgroundColor: [c2, c1, c3, c5, c1, c2, cCtx],
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(item) { return `${item.parsed.y} GW`; }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: `Kapasitas (GW)` }
+              }
+            }
+          }
+        });
+      } else {
+        if (titleEl) titleEl.textContent = `Tolok Ukur Bauran Pembangkit 1,5°C Tahun 2030 (%)`;
+        if (noteEl) noteEl.textContent = `Sumber: Implementation Check Indonesia (2024) — merangkum IEA, IESR, Climate Analytics, dan Climate Action Tracker (batas bawah–atas rentang).`;
+
+        landscapeChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: [`IESR`, `IEA`, `Climate Analytics (Min)`, `Climate Action Tracker (Max)`],
+            datasets: [
+              {
+                label: `Target Porsi EBT 2030 (%)`,
+                data: [45, 57, 70, 82],
+                backgroundColor: c3,
+                borderRadius: 4
+              },
+              {
+                label: `Porsi Batu Bara 2030 (%)`,
+                data: [39, 20, 16, 7],
+                backgroundColor: c4,
+                borderRadius: 4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom' }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: { display: true, text: `Persentase Bauran (%)` }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function switchLandscapeChart(mode, btnEl) {
+      const parent = btnEl ? btnEl.parentElement : null;
+      if (parent) {
+        parent.querySelectorAll('.btn-toggle').forEach(function(b) { b.classList.remove('active'); });
+      }
+      if (btnEl) btnEl.classList.add('active');
+      renderLandscapeChart(mode);
+    }
+
+    // =========================================================================
+    // 2. BAGIAN 02: PETA INTERAKTIF SPASIAL ENERGI INDONESIA (LEAFLET VECTOR)
+    // =========================================================================
+    let energyMap = null;
+    const mapLayers = {
+      imbalance: null,
+      rez: null,
+      supergrid: null,
+      rural: null
+    };
+    const activeLayerState = {
+      imbalance: true,
+      rez: true,
+      supergrid: true,
+      rural: true
+    };
+
+    const MAP_FEATURES = [
+      {
+        id: `jawabali-load`,
+        layer: `imbalance`,
+        lat: -6.9, lng: 109.2,
+        radius: 16,
+        colorVar: `--data-4`,
+        category: `Ketimpangan Beban & Potensi`,
+        scale: `REGIONAL`,
+        title: `Jawa–Bali: Pusat Beban Utama vs Potensi Terbatas`,
+        cap: `Potensi 721,08 GW (19,6%) · Beban ~70%`,
+        status: `Kapasitas Gardu Induk Terkonsentrasi`,
+        pwk: `RTRW Provinsi, RDTR Perkotaan, SUTET 500 kV`,
+        actor: `PLN Sistem Jawa–Bali & Kawasan Industri`,
+        desc: `Jawa–Bali menanggung sekitar 70% kebutuhan listrik nasional namun hanya menyimpan 19,6% dari total 3.687 GW potensi EBT Indonesia (Susandy, 2026; IRENA, 2017). Lokasi memiliki kepadatan industri tinggi (LQ > 1) dan jaringan listrik rapat, tetapi butuh pasokan energi bersih dari luar pulau maupun optimalisasi atap surya dan waduk.`
+      },
+      {
+        id: `cirata`,
+        layer: `rural`,
+        lat: -6.701, lng: 107.367,
+        radius: 10,
+        colorVar: `--data-1`,
+        category: `Inovasi Tata Ruang Air`,
+        scale: `UTILITAS & RISET`,
+        title: `PLTS Terapung Cirata & Fasilitas Riset (Purwakarta)`,
+        cap: `192 MWp (245 GWh/thn) + Riset 1,3 MW`,
+        status: `Beroperasi (Diresmikan Nov 2023)`,
+        pwk: `Tata Kelola Waduk, RTRW Purwakarta, AMDAL`,
+        actor: `PLN, Masdar, PT PJB (Riset Thin-Film CIS)`,
+        desc: `Berlokasi di Waduk Cirata bersama PLTA 1.000 MW dengan tarif 5,8 sen USD/kWh. Memakai permukaan air sehingga tidak mengambil lahan sawah atau hutan. Tantangan PWK bergeser ke pembagian zonasi waduk agar tidak mengganggu keramba ikan, pariwisata, dan kualitas air.`
+      },
+      {
+        id: `cibarengkok`,
+        layer: `rural`,
+        lat: -6.92, lng: 106.56,
+        radius: 7,
+        colorVar: `--data-3`,
+        category: `EBT Berbasis Komunitas`,
+        scale: `MIKROHIDRO`,
+        title: `PLTMH Cibarengkok & Klaster MHP Jawa Barat`,
+        cap: `6,5 kW (63 KK) · Curug Agung 788 kW`,
+        status: `Beroperasi & Terhubung PLN`,
+        pwk: `Pengelolaan DAS, Perizinan Air Lokal`,
+        actor: `IBEKA, AHM, & Masyarakat Sukabumi/Subang`,
+        desc: `Membangun mikrohidro sungai kecil di Sukamulya, Sukabumi (6,5 kW untuk 63 keluarga), serta jaringan PLTMH lain yang masuk saluran PLN di Jawa Barat seperti Curug Agung Subang (788 kW), Cinta Mekar (120 kW), Cipayung (240 kW), dan Jembelair Purwakarta (100 kW).`
+      },
+      {
+        id: `sumpur`,
+        layer: `rural`,
+        lat: -0.78, lng: 100.89,
+        radius: 8,
+        colorVar: `--data-3`,
+        category: `Teknologi Tepat Guna (Ceruk)`,
+        scale: `PICO-HYDRO`,
+        title: `Pico-Hydro Portabel Sumpur Kudus (Sijunjung, Sumbar)`,
+        cap: `≤ 1 kW (Baterai 45 Ah)`,
+        status: `Purwarupa STEI ITB 2024`,
+        pwk: `Rencana Desa / Hutan Nagari`,
+        actor: `Pemanen Rotan & Penjaga Hutan Nagari`,
+        desc: `Alat pembangkit ringan yang dibawa ke sungai kecil di dalam hutan nagari untuk penerangan pos jaga dan pemanen rotan. Memenuhi kriteria teknologi tepat guna Schumacher: murah, dapat dioperasikan, dan dirawat langsung oleh penggunanya tanpa bergantung jaringan PLN.`
+      },
+      {
+        id: `mentawai`,
+        layer: `rural`,
+        lat: -1.95, lng: 99.62,
+        radius: 7,
+        colorVar: `--data-1`,
+        category: `Kajian Energi Laut`,
+        scale: `STUDI OTEC`,
+        title: `Kajian OTEC Kepulauan Mentawai (Sumatera Barat)`,
+        cap: `Desain Awal 100 MW-net`,
+        status: `Riset Akademik & Kelautan`,
+        pwk: `Tata Ruang Laut & Pulau Kecil`,
+        actor: `Peneliti Energi Laut Nasional`,
+        desc: `Konversi Energi Panas Laut (OTEC) memanfaatkan gradien suhu laut dalam dan permukaan di perairan barat Sumatera untuk menyuplai energi pulau terluar.`
+      },
+      {
+        id: `batang-gresik`,
+        layer: `rez`,
+        lat: -7.05, lng: 111.15,
+        radius: 9,
+        colorVar: `--data-2`,
+        category: `Adaptasi KEK/SEZ ke REZ`,
+        scale: `KLASTER INDUSTRI`,
+        title: `Koridor Industri Batang & Gresik (KEK/SEZ Hijau)`,
+        cap: `Jangkar Beban Manufaktur & EV`,
+        status: `Adaptasi Zona Industri Hijau`,
+        pwk: `RTRW, KEK/SEZ, Green PPA`,
+        actor: `Pengelola KEK, PLN, Kemenperin`,
+        desc: `Analisis INDEF menunjukkan KEK di Jawa (Batang, Gresik) dapat diadaptasi agar permintaan industrinya terkoneksi langsung dengan listrik bersih dan perjanjian beli listrik hijau (green PPA), mendorong daya saing ekspor rendah karbon.`
+      },
+      {
+        id: `mentarang`,
+        layer: `rural`,
+        lat: 3.45, lng: 116.45,
+        radius: 11,
+        colorVar: `--data-1`,
+        category: `Rezim Pembangkit Besar`,
+        scale: `PLTA UTILITAS`,
+        title: `PLTA Mentarang Induk & Potensi Hidro Kaltara`,
+        cap: `1.375 MW`,
+        status: `Konstruksi · Target Operasi 2030`,
+        pwk: `RUPTL, RTRW Kalimantan Utara, AMDAL`,
+        actor: `PLN, Konsorsium Daerah & Swasta`,
+        desc: `Pembangkit hidro berskala besar dengan bendungan, genangan, dan transmisi tegangan tinggi di Kalimantan Utara. Berkontribusi menjadi jangkar listrik bersih bagi pengembangan kawasan industri hijau di Kaltara (mirip model Sarawak SCORE).`
+      },
+      {
+        id: `rez-kaltara`,
+        layer: `rez`,
+        lat: 2.85, lng: 117.36,
+        radius: 10,
+        colorVar: `--data-2`,
+        category: `Renewable Energy Zone (REZ)`,
+        scale: `KORIDOR HIJAU`,
+        title: `REZ Kalimantan Utara (Aglomerasi Hidro–Industri)`,
+        cap: `Potensi Multi-GW (Hidro Kayan & Surya)`,
+        status: `Zona Prioritas Hilirisasi Hijau`,
+        pwk: `Steering Layer: PLN, ATR/BPN, Pemda, Kemenkeu`,
+        actor: `Kawasan Industri Kaltara & Pemda`,
+        desc: `Mencontoh keberhasilan Sarawak SCORE (RECODA) di Malaysia: sumber hidro besar hanya berdampak maksimal bila diselaraskan sejak awal dengan klaster industri penyerap daya bersih melalui satu otoritas tata kelola terpadu.`
+      },
+      {
+        id: `enggelam`,
+        layer: `rural`,
+        lat: -0.35, lng: 116.28,
+        radius: 8,
+        colorVar: `--data-3`,
+        category: `BUMDes Energi Terbarukan`,
+        scale: `KOMUNAL DESA`,
+        title: `PLTS Komunal Desa Muara Enggelam (Kutai Kartanegara)`,
+        cap: `Skala Komunal Desa`,
+        status: `Dikelola BUMDes Bersinar Desaku`,
+        pwk: `Perdes BUMDes, UU 30/2007 jo. UU BUMDes`,
+        actor: `Masyarakat Desa & BUMDes Bersinar Desaku`,
+        desc: `Contoh nyata pengelolaan listrik desa oleh Badan Usaha Milik Desa (BUMDes) untuk memacu kemandirian energi akar rumput dan menggerakkan ekonomi lokal tanpa bergantung penuh pada perluasan jaringan konvensional.`
+      },
+      {
+        id: `rez-sulawesi`,
+        layer: `rez`,
+        lat: -2.4, lng: 120.8,
+        radius: 10,
+        colorVar: `--data-2`,
+        category: `REZ & Potensi Hidro/Surya`,
+        scale: `KOTAK 3–4 INDEF`,
+        title: `Klaster Energi Sulawesi (Sulsel, Sulteng, Sultra)`,
+        cap: `Potensi Hidro & PLTM Ratusan MW`,
+        status: `Integrasi Industri & Grid Regional`,
+        pwk: `RUPTL, RTRW Provinsi, Koridor Transmisi`,
+        actor: `PLN, IPP, Sektor Smelter & Industri`,
+        desc: `Wilayah Sulawesi Tengah dan Tenggara memiliki konsentrasi industri hilirisasi mineral namun masih memerlukan penguatan jaringan listrik bersih (Box 4 INDEF) agar industri tidak terjebak pada pembangkit captive batu bara.`
+      },
+      {
+        id: `rez-ntt`,
+        layer: `rez`,
+        lat: -9.85, lng: 122.4,
+        radius: 13,
+        colorVar: `--data-2`,
+        category: `Potensi Tinggi · Grid Terbatas`,
+        scale: `KOTAK 3 INDEF`,
+        title: `REZ Nusa Tenggara (Potensi 432,67 GW)`,
+        cap: `432,67 GW (Potensi Regional Nusra)`,
+        status: `Prioritas Zona REZ & PLTS Terpusat`,
+        pwk: `Pra-Zonasi Lahan, Skema De-risking PT PII`,
+        actor: `Pemda NTT, PLN, Pengembang Surya`,
+        desc: `Nusa Tenggara memiliki intensitas surya dan angin luar biasa (432,67 GW), namun kepadatan industri dan kapasitas gardu induk masih rendah (Kotak 3 peta diagnostik INDEF). Sangat cocok untuk agregasi pengadaan PLTS skala utilitas maupun hidrogen hijau.`
+      },
+      {
+        id: `mataredi`,
+        layer: `rural`,
+        lat: -9.55, lng: 119.55,
+        radius: 8,
+        colorVar: `--data-3`,
+        category: `Program MENTARI · BUMDes`,
+        scale: `KOMUNAL NTT`,
+        title: `PLTS Program MENTARI Desa Mata Redi (Sumba Tengah)`,
+        cap: `PLTS Komunal Berkelanjutan`,
+        status: `Proyek Demonstrasi MENTARI`,
+        pwk: `Peningkatan Kapasitas BUMDes EBT`,
+        actor: `Program MENTARI & BUMDes Setempat`,
+        desc: `Disiapkan khusus untuk membuktikan model bisnis BUMDes pengelolaan PLTS rendah karbon agar berkelanjutan secara teknis dan finansial di wilayah Nusa Tenggara Timur.`
+      },
+      {
+        id: `kamanggih`,
+        layer: `rural`,
+        lat: -9.96, lng: 120.42,
+        radius: 8,
+        colorVar: `--data-3`,
+        category: `Kemitraan Komunitas–PLN`,
+        scale: `MIKROHIDRO 37 kW`,
+        title: `PLTMH Mbakuhau Desa Kamanggih (Sumba Timur)`,
+        cap: `37 kW (100 Rumah & Fasilitas Umum)`,
+        status: `Beroperasi Sejak 2011 · Sinergi PLN`,
+        pwk: `Jaringan 5 km · Operator Lokal Jadi Pegawai`,
+        actor: `IBEKA, Masyarakat Desa & PLN`,
+        desc: `Melistriki ~100 rumah, Puskesmas, sekolah, polsek, dan menara BTS. Dua operator desa direkrut menjadi karyawan PLN, 110 warga terdaftar gratis, dan PLN menyediakan generator cadangan saat debit air turun.`
+      },
+      {
+        id: `selat-lombok`,
+        layer: `rural`,
+        lat: -8.68, lng: 115.72,
+        radius: 7,
+        colorVar: `--data-1`,
+        category: `Energi Arus Laut`,
+        scale: `KAJIAN SELAT`,
+        title: `Kajian Arus Laut Selat Lombok & Alas`,
+        cap: `Potensi Arus Pasang Surut Selat Sempit`,
+        status: `Lokasi Kajian Strategis Energi Laut`,
+        pwk: `Zonasi Laut Antarprovinsi (Bali–NTB)`,
+        actor: `Kementerian ESDM & Peneliti Kelautan`,
+        desc: `Selat sempit antarpulau Nusa Tenggara memiliki kecepatan arus laut tinggi sehingga dikaji sebagai lokasi pembangkit arus laut dalam bauran energi jangka panjang.`
+      },
+      {
+        id: `maluku-papua`,
+        layer: `rez`,
+        lat: -2.9, lng: 133.5,
+        radius: 12,
+        colorVar: `--data-2`,
+        category: `Potensi Besar · Beban Terbatas`,
+        scale: `WILAYAH TIMUR`,
+        title: `Maluku Utara, Maluku & Papua (Potensi Hidro/Surya)`,
+        cap: `Potensi Multi-GW (termasuk Mamberamo)`,
+        status: `Tantangan Reliabilitas & Transmisi`,
+        pwk: `Sinkronisasi RTRW, Kawasan Hutan & Grid`,
+        actor: `PLN Wilayah Timur, Pemda, Investor Industri`,
+        desc: `Wilayah dengan potensi energi bersih besar (seperti Mamberamo dan potensi surya/hidro Maluku) tetapi menghadapi kendala jaringan terbatas, permintaan lokal tersebar, dan kebutuhan keandalan tinggi untuk kawasan industri.`
+      }
+    ];
+
+    const SUPERGRID_CORRIDORS = [
+      {
+        id: `sg-sumatra-jawa`,
+        name: `Interkoneksi Sumatera–Jawa (Nusantara Supergrid)`,
+        coords: [[-2.9, 104.7], [-5.4, 105.3], [-6.1, 106.0], [-6.2, 106.8]],
+        target: `Dijadwalkan Beroperasi 2031`,
+        desc: `Menghubungkan potensi panas bumi, hidro, dan surya Sumatera ke pusat beban utama di Jawa Barat dan Jakarta. Memerlukan penyiapan ruang kabel laut Selat Sunda dan koridor transmisi darat dalam RTRW provinsi.`
+      },
+      {
+        id: `sg-kalimantan-jawa`,
+        name: `Interkoneksi Kalimantan–Jawa (Nusantara Supergrid)`,
+        coords: [[2.8, 117.3], [-1.2, 116.8], [-3.3, 114.6], [-7.2, 112.7]],
+        target: `Dijadwalkan Beroperasi 2040`,
+        desc: `Menyalurkan listrik bersih dari sumber hidro dan surya skala besar Kalimantan (termasuk koridor Kaltara) menuju pusat industri Jawa Timur. Mengurangi ketergantungan jaringan yang terfragmentasi.`
+      },
+      {
+        id: `sg-jawa-bali-nusra`,
+        name: `Koridor Penguatan Jawa–Bali–Nusa Tenggara`,
+        coords: [[-7.4, 112.7], [-8.4, 115.2], [-8.6, 116.3], [-9.6, 120.2]],
+        target: `Penguatan Grid EBT Regional`,
+        desc: `Mendukung penyaluran potensi surya dan energi laut Nusa Tenggara serta menstabilkan sistem Bali–Nusra menuju penetrasi VRE tinggi.`
+      }
+    ];
+
+    function initEnergyMap() {
+      const mapEl = document.getElementById('energy-map');
+      if (!mapEl || typeof L === 'undefined') return;
+
+      energyMap = L.map('energy-map', {
+        center: [-2.4, 117.5],
+        zoom: 4,
+        minZoom: 4,
+        maxZoom: 8,
+        scrollWheelZoom: false
+      });
+
+      energyMap.attributionControl.addAttribution('Batas Wilayah: Natural Earth (domain publik)');
+
+      mapLayers.imbalance = L.layerGroup().addTo(energyMap);
+      mapLayers.rez = L.layerGroup().addTo(energyMap);
+      mapLayers.supergrid = L.layerGroup().addTo(energyMap);
+      mapLayers.rural = L.layerGroup().addTo(energyMap);
+
+      const oceanColor = cssToken('--map-ocean');
+      const landColor = cssToken('--map-land');
+      const neighborColor = cssToken('--map-land-neighbor');
+      const borderColor = cssToken('--map-border');
+      mapEl.style.backgroundColor = oceanColor;
+
+      fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json')
+        .then(function(r) { return r.json(); })
+        .then(function(topo) {
+          if (typeof topojson === 'undefined' || !energyMap) return;
+          const geo = topojson.feature(topo, topo.objects.countries);
+          L.geoJSON(geo, {
+            style: function(feature) {
+              const isIndo = feature.properties && feature.properties.name === 'Indonesia';
+              return {
+                fillColor: isIndo ? landColor : neighborColor,
+                fillOpacity: 1,
+                color: borderColor,
+                weight: isIndo ? 1.1 : 0.7
+              };
+            }
+          }).addTo(energyMap);
+
+          drawMapOverlays();
+          energyMap.fitBounds([[-10.5, 95.2], [5.6, 140.8]], { padding: [16, 16] });
+          energyMap.invalidateSize();
+        })
+        .catch(function() {
+          drawMapOverlays();
+          energyMap.fitBounds([[-10.5, 95.2], [5.6, 140.8]], { padding: [16, 16] });
+        });
+    }
+
+    function drawMapOverlays() {
+      if (!energyMap) return;
+
+      const gridColor = cssToken('--data-5');
+      SUPERGRID_CORRIDORS.forEach(function(cor) {
+        const line = L.polyline(cor.coords, {
+          color: gridColor,
+          weight: 3.5,
+          dashArray: '7 5',
+          opacity: 0.9
+        });
+        line.bindTooltip(cor.name);
+        line.on('click', function() {
+          updateMapInspector({
+            category: `Koridor Nusantara Supergrid`,
+            scale: `TRANSMISI ANTARPULAU`,
+            title: cor.name,
+            cap: `Kapasitas Penyeimbang Multi-GW`,
+            status: cor.target,
+            pwk: `RTRW Lintas Provinsi & Tata Ruang Laut`,
+            actor: `Kementerian ESDM & PT PLN`,
+            desc: cor.desc
+          });
+        });
+        line.addTo(mapLayers.supergrid);
+      });
+
+      const inkBorder = cssToken('--on-surface');
+      MAP_FEATURES.forEach(function(item) {
+        const fillCol = cssToken(item.colorVar);
+        const marker = L.circleMarker([item.lat, item.lng], {
+          radius: item.radius,
+          color: inkBorder,
+          weight: 1.5,
+          fillColor: fillCol,
+          fillOpacity: 0.86
+        });
+        marker.bindTooltip(`<strong>${item.title}</strong><br>${item.cap}`);
+        marker.on('click', function() {
+          updateMapInspector(item);
+        });
+        if (mapLayers[item.layer]) {
+          marker.addTo(mapLayers[item.layer]);
+        }
+      });
+    }
+
+    function updateMapInspector(item) {
+      const elCat = document.getElementById('map-insp-category');
+      const elScale = document.getElementById('map-insp-scale');
+      const elTitle = document.getElementById('map-insp-title');
+      const elDesc = document.getElementById('map-insp-desc');
+      const elCap = document.getElementById('map-insp-cap');
+      const elStatus = document.getElementById('map-insp-status');
+      const elPwk = document.getElementById('map-insp-pwk');
+      const elActor = document.getElementById('map-insp-actor');
+
+      if (elCat) elCat.textContent = item.category;
+      if (elScale) elScale.textContent = item.scale;
+      if (elTitle) elTitle.textContent = item.title;
+      if (elDesc) elDesc.textContent = item.desc;
+      if (elCap) elCap.textContent = item.cap;
+      if (elStatus) elStatus.textContent = item.status;
+      if (elPwk) elPwk.textContent = item.pwk;
+      if (elActor) elActor.textContent = item.actor;
+    }
+
+    function inspectMapFeature(featureId) {
+      const found = MAP_FEATURES.find(function(f) { return f.id === featureId; });
+      if (!found) return;
+      updateMapInspector(found);
+      if (energyMap) {
+        if (!activeLayerState[found.layer]) {
+          const btn = document.getElementById(`layer-btn-${found.layer}`);
+          toggleMapLayer(found.layer, btn);
+        }
+        energyMap.flyTo([found.lat, found.lng], 6, { duration: 0.6 });
+      }
+    }
+
+    function toggleMapLayer(layerKey, btnEl) {
+      if (!energyMap || !mapLayers[layerKey]) return;
+      activeLayerState[layerKey] = !activeLayerState[layerKey];
+      if (activeLayerState[layerKey]) {
+        mapLayers[layerKey].addTo(energyMap);
+        if (btnEl) btnEl.classList.add('active');
+      } else {
+        energyMap.removeLayer(mapLayers[layerKey]);
+        if (btnEl) btnEl.classList.remove('active');
+      }
+    }
+
+    function focusMapRegion(regionKey) {
+      if (!energyMap) return;
+      const views = {
+        all: { bounds: [[-10.5, 95.2], [5.6, 140.8]] },
+        jawabali: { center: [-7.2, 110.2], zoom: 6 },
+        sumatera: { center: [-1.0, 102.0], zoom: 6 },
+        kalimantan: { center: [1.0, 115.0], zoom: 6 },
+        nusra: { center: [-6.5, 121.0], zoom: 5 }
+      };
+      const v = views[regionKey];
+      if (!v) return;
+      if (v.bounds) {
+        energyMap.fitBounds(v.bounds, { padding: [16, 16] });
+      } else {
+        energyMap.flyTo(v.center, v.zoom, { duration: 0.6 });
+      }
+    }
+
+    // =========================================================================
+    // 3. BAGIAN 03: CORONG POTENSI EBT (3.687 GW VS REALISASI)
+    // =========================================================================
+    const FUNNEL_STAGES = {
+      teoretis: {
+        badge: `Tahap 01 · Dasar Fisik`,
+        metric: `FISIKA SUMBER DAYA`,
+        title: `Potensi Teoretis: Total Energi Alamiah`,
+        desc: `Mengukur seluruh energi fisik yang tersedia secara alamiah — seperti radiasi surya di seluruh daratan dan lautan, energi aliran air dari hulu ke hilir, maupun energi panas bumi di busur vulkanik. Angka ini jauh melampaui kemampuan teknologi dan tidak boleh dipakai langsung sebagai target pembangunan.`,
+        filter: `Disaring oleh efisiensi konversi fisik (misalnya batas efisiensi sel surya dan turbin) sebelum menjadi potensi teknis.`
+      },
+      teknis: {
+        badge: `Tahap 02 · Kapasitas Teknologi`,
+        metric: `3.687 GW NASIONAL`,
+        title: `Potensi Teknis: 3.687 GW (Jawa–Bali 721 GW · Nusra 432,67 GW)`,
+        desc: `Mengukur energi yang dapat dipanen oleh teknologi konversi saat ini. Indonesia tercatat memiliki potensi teknis 3.687 GW. Namun, Jawa–Bali sebagai pusat konsumsi hanya menyumbang 19,6% (721,08 GW), sedangkan kawasan timur seperti Nusa Tenggara menyimpan 432,67 GW.`,
+        filter: `Angka 3.687 GW masih belum mengeluarkan sepenuhnya kendala kelayakan finansial, harga jual listrik (BPP), kawasan hutan konservasi, dan jarak ke gardu induk.`
+      },
+      ekonomis: {
+        badge: `Tahap 03 · Kelayakan Biaya & Tarif`,
+        metric: `BPP LOKAL & TARIF 2 PERIODE`,
+        title: `Potensi Ekonomis: Tersaring Aturan Tarif & Pembiayaan`,
+        desc: `Hanya proyek yang biaya produksinya kompetitif terhadap Biaya Pokok Penyediaan (BPP) lokal dan aturan harga patokan tertinggi Permen ESDM yang lolos tahap ini. Di Jawa–Sumatera–Bali, batu bara murah menekan tarif beli EBT; sementara struktur tarif dua periode (IEEFA) memangkas harga hampir 50% setelah tahun ke-10.`,
+        filter: `Risiko curtailment, keterbatasan tenor utang, serta biaya interkoneksi transmisi membuat banyak proyek layak secara teknis gagal mencapai financial close.`
+      },
+      realistis: {
+        badge: `Tahap 04 · Ruang & Tata Kelola`,
+        metric: `SIAP BANGUN & OPERASIONAL`,
+        title: `Potensi Realistis: Lolos RTRW, Lahan & Penerimaan Komunitas`,
+        desc: `Tahap akhir yang benar-benar bisa dibangun di dunia nyata setelah disaring oleh rencana tata ruang (RTRW/RDTR), kawasan lindung, hak lintas transmisi (ROW), dan keseimbangan pemanfaatan ruang lokal — contohnya batas penutupan permukaan Waduk Cirata agar perikanan keramba dan kualitas air tetap terjaga.`,
+        filter: `Di sinilah peran utama perencana wilayah: membuka sumbatan lahan melalui pra-zonasi REZ dan memperkuat tata kelola lokal (seperti BUMDes dan kesepakatan masyarakat).`
+      }
+    };
+
+    function selectFunnelStage(key, btnEl) {
+      const data = FUNNEL_STAGES[key];
+      if (!data) return;
+
+      document.querySelectorAll('.funnel-stage-btn').forEach(function(b) { b.classList.remove('active'); });
+      if (btnEl) btnEl.classList.add('active');
+
+      const elBadge = document.getElementById('funnel-badge');
+      const elMetric = document.getElementById('funnel-metric');
+      const elTitle = document.getElementById('funnel-title');
+      const elDesc = document.getElementById('funnel-desc');
+      const elFilter = document.getElementById('funnel-filter');
+
+      if (elBadge) elBadge.textContent = data.badge;
+      if (elMetric) elMetric.textContent = data.metric;
+      if (elTitle) elTitle.textContent = data.title;
+      if (elDesc) elDesc.textContent = data.desc;
+      if (elFilter) elFilter.textContent = data.filter;
+    }
+
+    function renderFunnelChart() {
+      const canvas = document.getElementById('funnelChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      const ctx = canvas.getContext('2d');
+
+      const c1 = cssToken('--data-1');
+      const c2 = cssToken('--data-2');
+      const c3 = cssToken('--data-3');
+      const cCtx = cssToken('--data-context');
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [`Jawa–Bali (19,6%)`, `Nusa Tenggara`, `Wilayah Lain (Sum, Kal, Sul, Mal–Papua)`, `PLTS Terapung Nasional (295 Waduk)`],
+          datasets: [{
+            label: `Potensi Teknis (GW)`,
+            data: [721.08, 432.67, 2533.25, 89.36],
+            backgroundColor: [c1, c2, cCtx, c3],
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(item) { return `${item.parsed.x} GW`; }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              title: { display: true, text: `Potensi Teknis (GW)` }
+            }
+          }
+        }
+      });
+    }
+
+    // =========================================================================
+    // 4. BAGIAN 04: ANALISIS JARINGAN INTERAKTIF (D3 SVG NETWORK GRAPH)
+    // =========================================================================
+    const NETWORK_NODES = [
+      // Cluster 1: Konsep Energi & Ruang (ruang)
+      { id: `keruangan`, label: `Sistem Keruangan Energi`, cluster: `ruang`, x: 220, y: 120, desc: `Energi dipahami sebagai sistem keruangan dengan simpul produksi, transmisi, dan konsumsi yang terpisah secara geografis (Bridge dkk., 2013; Blaschke dkk., 2013).`, insight: `Pergeseran ke surya & angin memperluas jejak lahan per unit energi dibanding PLTU.` },
+      { id: `urbanform`, label: `Bentuk Kota & Densitas`, cluster: `ruang`, x: 115, y: 205, desc: `Kepadatan kota dan sistem transportasi massal menentukan konsumsi energi per kapita jangka panjang (Newman & Kenworthy, 1989; IPCC AR6).`, insight: `Kota kompak menekan kebutuhan BBM transportasi dan memudahkan jaringan energi distrik.` },
+      { id: `aglomerasi`, label: `Aglomerasi 3D (INDEF)`, cluster: `ruang`, x: 315, y: 215, desc: `Kerangka kepadatan (density), jarak (distance), dan fragmentasi (division) dengan tiga jalur aglomerasi: berbagi infrastruktur, pencocokan, dan pembelajaran.`, insight: `Menjelaskan mengapa ketimpangan jaringan di Indonesia Timur menghambat industrialisasi hijau.` },
+      { id: `jejaklahan`, label: `Jejak Lahan & Waduk`, cluster: `ruang`, x: 155, y: 315, desc: `Kompetisi ruang antara pembangkit EBT dengan pertanian, hutan lindung, dan tata kelola permukaan danau/waduk (seperti Waduk Cirata).`, insight: `Potensi 89,36 GW PLTS terapung menghindari konversi sawah namun menuntut zonasi perairan.` },
+
+      // Cluster 2: Instrumen Tata Ruang & Regulasi (instrumen)
+      { id: `rtrw`, label: `RTRW & Zonasi SUTET`, cluster: `instrumen`, x: 420, y: 95, desc: `Rencana Tata Ruang Wilayah menetapkan kawasan pertambangan, alur pelayaran, zona pembangkit, pra-zonasi REZ, dan ruang bebas koridor transmisi.`, insight: `Tanpa integrasi RTRW sejak awal, proyek EBT dan transmisi Supergrid terhambat pembebasan lahan.` },
+      { id: `rdtr`, label: `RDTR & Atap Surya`, cluster: `instrumen`, x: 335, y: 325, desc: `Rencana Detail Tata Ruang mengatur intensitas bangunan (KDB/KLB), syarat efisiensi energi, pemanfaatan atap surya, dan standar RTH 85% vegetasi.`, insight: `43 dari 45 Champion Cities memakai regulasi perencanaan & tata guna lahan untuk memacu EBT.` },
+      { id: `rued`, label: `RUEN & RUED Daerah`, cluster: `instrumen`, x: 515, y: 195, desc: `Rencana Umum Energi Nasional dan Daerah menetapkan target bauran energi serta strategi pengalihan subsidi fosil menuju insentif EBT.`, insight: `Membutuhkan sinkronisasi lintas sektor karena target bauran EBT 23% pada 2025 sempat meleset.` },
+      { id: `ruptl`, label: `RUPTL PLN & RUKN 2060`, cluster: `instrumen`, x: 615, y: 110, desc: `Dokumen perencanaan pengadaan pembangkit dan transmisi kelistrikan, termasuk peta jalan 443 GW DMN (42% VRE + 34 GW storage) dan Nusantara Supergrid.`, insight: `Harus disinkronkan dengan RTRW dan rencana kawasan industri melalui steering layer.` },
+      { id: `tarif`, label: `Permen ESDM Tarif & BPP`, cluster: `instrumen`, x: 575, y: 290, desc: `Mengatur harga patokan tertinggi dua periode (tahun 1–10 dan tahun 11–30) serta acuan BPP lokal yang menentukan kelayakan finansial IPP dan PLTMH.`, insight: `Tarif periode kedua yang turun ~50% dan dominasi batu bara murah di Jawa memengaruhi potensi ekonomis.` },
+
+      // Cluster 3: Tipologi Teknologi EBT (teknologi)
+      { id: `cirata`, label: `PLTS Terapung & Atap`, cluster: `teknologi`, x: 255, y: 425, desc: `Pembangkit tenaga surya pada permukaan waduk (Cirata 192 MWp), atap bangunan kota, hingga aplikasi nelayan (perahu/pendingin surya).`, insight: `Solusi minim konflik lahan pertanian yang relevan bagi Pulau Jawa yang padat.` },
+      { id: `mikrohidro`, label: `PLTMH & Pico-Hydro`, cluster: `teknologi`, x: 710, y: 435, desc: `Pembangkit hidro skala kecil (Pico ≤1 kW Sumpur Kudus; Mikro ≤100 kW Kamanggih 37 kW; Mini 100–1000 kW Curug Agung 788 kW).`, insight: `Mampu dibiayai dan dirawat komunitas bila didukung pelatihan operator dan kerja sama grid lokal.` },
+      { id: `pltabesar`, label: `PLTA & Supergrid`, cluster: `teknologi`, x: 750, y: 170, desc: `Pembangkit air skala besar (>100 MW, seperti Mentarang Induk 1.375 MW) dan jaringan transmisi antarpulau Sumatera–Jawa (2031) & Kalimantan–Jawa (2040).`, insight: `Membutuhkan desain bendungan berstandar tinggi dan sinkronisasi tata ruang lintas provinsi.` },
+      { id: `bess`, label: `Hibrida & Storage (BESS)`, cluster: `teknologi`, x: 665, y: 225, desc: `Integrasi penyimpanan baterai (34 GW dalam RUKN 2060) maupun kompleks hibrida hidro–surya (seperti model Longyangxia dengan curtailment <5%).`, insight: `Menjawab keterbatasan intermitensi VRE dan mengatasi dua kelemahan utama metrik LCOE.` },
+      { id: `panasbumi`, label: `Panas Bumi & Energi Laut`, cluster: `teknologi`, x: 805, y: 270, desc: `369 titik panas bumi (19 PLTP terpasang), kajian arus laut Selat Lombok, dan desain OTEC 100 MW-net Mentawai.`, insight: `Menyediakan baseload rendah karbon bagi wilayah kepulauan di Cincin Api.` },
+
+      // Cluster 4: Pemodelan Spasial-Energi (model)
+      { id: `gis`, label: `Overlay GIS & Lindung`, cluster: `model`, x: 375, y: 430, desc: `Menumpangsusunkan peta potensi EBT, tutupan lahan, kawasan lindung, dan jaringan transmisi untuk mengukur potensi realistis di tingkat kabupaten/kota.`, insight: `Menjadi dasar identifikasi ketidaksesuaian spasial antara lokasi sumber dan pusat beban.` },
+      { id: `homer`, label: `Pemodelan HOMER / PyPSA`, cluster: `model`, x: 495, y: 445, desc: `Alat optimasi desain sistem energi mikrogrid dan multi-simpul (HOMER, PyPSA, Oemof, Calliope) untuk menentukan bauran pembangkit, baterai, dan LCOE.`, insight: `Membantu perencana memilih konfigurasi biaya sistem terendah pada tingkat desa hingga koridor.` },
+      { id: `leap`, label: `Proyeksi LEAP / EnergyPLAN`, cluster: `model`, x: 470, y: 360, desc: `Pemodelan energi bawah-ke-atas jangka panjang (LEAP, EnergyPLAN, model linear regional) untuk mengevaluasi skenario RUED, bauran 2030/2060, dan emisi.`, insight: `Menghubungkan asumsi pertumbuhan PDB/populasi dengan kebutuhan infrastruktur pembangkit.` },
+      { id: `lq`, label: `Diagnostik LQ & Heat Maps`, cluster: `model`, x: 435, y: 210, desc: `Pemetaan Location Quotient (LQ) industri terhadap kapasitas gardu induk (MVA) ala INDEF serta Spatial Heat Maps yang dipakai 55% Champion Cities.`, insight: `Mengidentifikasi wilayah Kotak 3–4 (potensi tinggi, jaringan lemah) sebagai lokasi ideal REZ.` },
+
+      // Cluster 5: Kelembagaan & Komunitas (lembaga)
+      { id: `rez`, label: `Zona REZ & KEK/SEZ`, cluster: `lembaga`, x: 595, y: 380, desc: `Renewable Energy Zones menyatukan pembangkit EBT, koridor transmisi, dan industri dalam satu tata kelola terpadu (contoh NSW EnergyCo & Sarawak RECODA).`, insight: `Mengubah EBT dari sekadar beban kepatuhan menjadi mesin daya saing industri hijau.` },
+      { id: `bumdes`, label: `BUMDes Energi Bersih`, cluster: `lembaga`, x: 825, y: 400, desc: `Badan Usaha Milik Desa (UU 30/2007 jo. UU BUMDes) sebagai pengelola PLTS komunal seperti Muara Enggelam dan Desa Energi Berdikari.`, insight: `Teori sistem hukum Friedman menuntut penguatan aturan undang-undang agar peran BUMDes kokoh.` },
+      { id: `ibeka`, label: `Program MENTARI & IBEKA`, cluster: `lembaga`, x: 755, y: 500, desc: `Pendampingan teknis dan penguatan kapasitas komunitas desa (Desa Mata Redi Sumba Tengah & PLTMH Kamanggih Sumba Timur).`, insight: `Kunci keberlanjutan jangka panjang terletak pada ketersediaan operator terlatih lokal dan dana pemeliharaan.` },
+      { id: `kpbu`, label: `Skema KPBU & De-risking`, cluster: `lembaga`, x: 655, y: 325, desc: `Koordinasi penjaminan pemerintah (Kemenkeu, PT PII, PT SMI), template PPA bankable, dan pembiayaan konsesional untuk menurunkan risiko proyek zona.`, insight: `Mengatasi keterbatasan neraca utilitas akibat beban subsidi listrik.` }
+    ];
+
+    const NETWORK_LINKS = [
+      { source: `keruangan`, target: `rtrw`, rel: `diatur oleh` },
+      { source: `keruangan`, target: `urbanform`, rel: `membentuk` },
+      { source: `keruangan`, target: `aglomerasi`, rel: `dianalisis via` },
+      { source: `keruangan`, target: `jejaklahan`, rel: `menciptakan` },
+      { source: `urbanform`, target: `rdtr`, rel: `dikunci dalam` },
+      { source: `jejaklahan`, target: `cirata`, rel: `diatasi via` },
+      { source: `jejaklahan`, target: `gis`, rel: `dipetakan oleh` },
+      { source: `rtrw`, target: `rdtr`, rel: `diturunkan ke` },
+      { source: `rtrw`, target: `ruptl`, rel: `diselaraskan` },
+      { source: `rtrw`, target: `lq`, rel: `diinformasikan` },
+      { source: `rued`, target: `rtrw`, rel: `sinkron ruang` },
+      { source: `rued`, target: `leap`, rel: `dimodelkan via` },
+      { source: `rued`, target: `tarif`, rel: `insentif fiskal` },
+      { source: `ruptl`, target: `pltabesar`, rel: `memuat` },
+      { source: `ruptl`, target: `bess`, rel: `integrasi VRE` },
+      { source: `ruptl`, target: `rez`, rel: `pengadaan zona` },
+      { source: `tarif`, target: `kpbu`, rel: `bankabilitas` },
+      { source: `tarif`, target: `mikrohidro`, rel: `skema BPP/FIT` },
+      { source: `aglomerasi`, target: `lq`, rel: `indikator spasial` },
+      { source: `aglomerasi`, target: `rez`, rel: `landasan teori` },
+      { source: `lq`, target: `rez`, rel: `menentukan lokasi` },
+      { source: `gis`, target: `cirata`, rel: `zonasi waduk` },
+      { source: `gis`, target: `homer`, rel: `masukan spasial` },
+      { source: `homer`, target: `leap`, rel: `komplementer` },
+      { source: `homer`, target: `mikrohidro`, rel: `optimasi mikrogrid` },
+      { source: `homer`, target: `bess`, rel: `ukuran storage` },
+      { source: `leap`, target: `rdtr`, rel: `proyeksi beban` },
+      { source: `rez`, target: `kpbu`, rel: `de-risking zona` },
+      { source: `rez`, target: `pltabesar`, rel: `jangkar bersih` },
+      { source: `rez`, target: `panasbumi`, rel: `sumber baseload` },
+      { source: `mikrohidro`, target: `bumdes`, rel: `dikelola oleh` },
+      { source: `mikrohidro`, target: `ibeka`, rel: `pendampingan` },
+      { source: `bumdes`, target: `ibeka`, rel: `kemitraan desa` },
+      { source: `bumdes`, target: `rdtr`, rel: `skala lokal/desa` }
+    ];
+
+    let netSvg, netGroup, netZoomBehavior, netSimulation;
+    let selectedNetNodeId = null;
+    let activeNetCluster = 'all';
+
+    function clusterColor(cluster) {
+      if (cluster === 'ruang') return cssToken('--data-1');
+      if (cluster === 'instrumen') return cssToken('--data-4');
+      if (cluster === 'teknologi') return cssToken('--data-2');
+      if (cluster === 'model') return cssToken('--data-5');
+      if (cluster === 'lembaga') return cssToken('--data-3');
+      return cssToken('--data-context');
+    }
+
+    function clusterTitle(cluster) {
+      const names = {
+        ruang: `Klaster 01 · Konsep Energi & Ruang`,
+        instrumen: `Klaster 02 · Instrumen Tata Ruang & Regulasi`,
+        teknologi: `Klaster 03 · Tipologi Teknologi EBT`,
+        model: `Klaster 04 · Pemodelan Spasial-Energi`,
+        lembaga: `Klaster 05 · Kelembagaan, REZ & BUMDes`
+      };
+      return names[cluster] || `Jaringan PWK`;
+    }
+
+    function initNetworkGraph() {
+      const wrap = document.getElementById('network-canvas-wrap');
+      const svgEl = document.getElementById('network-svg');
+      const selectEl = document.getElementById('net-node-select');
+      if (!wrap || !svgEl || typeof d3 === 'undefined') return;
+
+      if (selectEl) {
+        NETWORK_NODES.forEach(function(n) {
+          const opt = document.createElement('option');
+          opt.value = n.id;
+          opt.textContent = `${n.label} (${clusterTitle(n.cluster).split('·')[1].trim()})`;
+          selectEl.appendChild(opt);
+        });
+      }
+
+      const width = 920;
+      const height = 560;
+
+      netSvg = d3.select('#network-svg')
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+
+      netSvg.selectAll('*').remove();
+
+      netZoomBehavior = d3.zoom()
+        .scaleExtent([0.65, 2.2])
+        .on('zoom', function(event) {
+          netGroup.attr('transform', event.transform);
+        });
+
+      netSvg.call(netZoomBehavior);
+      netGroup = netSvg.append('g');
+
+      // Clone links for D3 force simulation
+      const simLinks = NETWORK_LINKS.map(function(l) {
+        return { source: l.source, target: l.target, rel: l.rel };
+      });
+
+      // Keep anchored layout with gentle collision resolution
+      netSimulation = d3.forceSimulation(NETWORK_NODES)
+        .force('link', d3.forceLink(simLinks).id(function(d) { return d.id; }).distance(105).strength(0.25))
+        .force('charge', d3.forceManyBody().strength(-160))
+        .force('x', d3.forceX(function(d) { return d.x; }).strength(0.42))
+        .force('y', d3.forceY(function(d) { return d.y; }).strength(0.42))
+        .force('collide', d3.forceCollide(38));
+
+      const linkSel = netGroup.append('g')
+        .selectAll('line')
+        .data(simLinks)
+        .enter()
+        .append('line')
+        .attr('class', 'net-link');
+
+      const edgeLabelSel = netGroup.append('g')
+        .selectAll('text')
+        .data(simLinks)
+        .enter()
+        .append('text')
+        .attr('class', 'net-edge-label')
+        .style('opacity', 0)
+        .text(function(d) { return d.rel; });
+
+      const nodeSel = netGroup.append('g')
+        .selectAll('g')
+        .data(NETWORK_NODES)
+        .enter()
+        .append('g')
+        .attr('class', 'net-node')
+        .call(d3.drag()
+          .on('start', function(event, d) {
+            if (!event.active) netSimulation.alphaTarget(0.25).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on('drag', function(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on('end', function(event, d) {
+            if (!event.active) netSimulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+          })
+        )
+        .on('click', function(event, d) {
+          event.stopPropagation();
+          selectNetworkNodeById(d.id);
+        });
+
+      nodeSel.append('circle')
+        .attr('r', 15)
+        .attr('fill', function(d) { return clusterColor(d.cluster); });
+
+      nodeSel.append('text')
+        .attr('class', 'net-label')
+        .attr('dy', 29)
+        .text(function(d) { return d.label; });
+
+      netSvg.on('click', function() {
+        clearNetworkSelection();
+      });
+
+      netSimulation.on('tick', function() {
+        linkSel
+          .attr('x1', function(d) { return d.source.x; })
+          .attr('y1', function(d) { return d.source.y; })
+          .attr('x2', function(d) { return d.target.x; })
+          .attr('y2', function(d) { return d.target.y; });
+
+        edgeLabelSel
+          .attr('x', function(d) { return (d.source.x + d.target.x) / 2; })
+          .attr('y', function(d) { return (d.source.y + d.target.y) / 2 - 4; });
+
+        nodeSel.attr('transform', function(d) {
+          const cx = Math.max(45, Math.min(width - 45, d.x));
+          const cy = Math.max(35, Math.min(height - 40, d.y));
+          d.x = cx;
+          d.y = cy;
+          return `translate(${cx},${cy})`;
+        });
+      });
+
+      // Store selections on window for helper functions
+      window._netRefs = { nodeSel: nodeSel, linkSel: linkSel, edgeLabelSel: edgeLabelSel, simLinks: simLinks };
+    }
+
+    function selectNetworkNodeById(nodeId) {
+      if (!nodeId) {
+        clearNetworkSelection();
+        return;
+      }
+      const node = NETWORK_NODES.find(function(n) { return n.id === nodeId; });
+      if (!node || !window._netRefs) return;
+
+      selectedNetNodeId = nodeId;
+      const selectEl = document.getElementById('net-node-select');
+      if (selectEl) selectEl.value = nodeId;
+
+      const refs = window._netRefs;
+      const neighborIds = new Set([nodeId]);
+      const neighborBtns = [];
+
+      refs.simLinks.forEach(function(l) {
+        const sId = typeof l.source === 'object' ? l.source.id : l.source;
+        const tId = typeof l.target === 'object' ? l.target.id : l.target;
+        if (sId === nodeId) {
+          neighborIds.add(tId);
+          neighborBtns.push({ id: tId, rel: l.rel });
+        } else if (tId === nodeId) {
+          neighborIds.add(sId);
+          neighborBtns.push({ id: sId, rel: l.rel });
+        }
+      });
+
+      refs.nodeSel
+        .classed('selected', function(d) { return d.id === nodeId; })
+        .classed('dimmed', function(d) { return !neighborIds.has(d.id); });
+
+      refs.linkSel
+        .classed('highlighted', function(l) {
+          const sId = typeof l.source === 'object' ? l.source.id : l.source;
+          const tId = typeof l.target === 'object' ? l.target.id : l.target;
+          return sId === nodeId || tId === nodeId;
+        })
+        .classed('dimmed', function(l) {
+          const sId = typeof l.source === 'object' ? l.source.id : l.source;
+          const tId = typeof l.target === 'object' ? l.target.id : l.target;
+          return sId !== nodeId && tId !== nodeId;
+        });
+
+      refs.edgeLabelSel
+        .style('opacity', function(l) {
+          const sId = typeof l.source === 'object' ? l.source.id : l.source;
+          const tId = typeof l.target === 'object' ? l.target.id : l.target;
+          return (sId === nodeId || tId === nodeId) ? 1 : 0;
+        });
+
+      // Update inspector
+      const elClust = document.getElementById('net-insp-cluster');
+      const elDeg = document.getElementById('net-insp-deg');
+      const elTitle = document.getElementById('net-insp-title');
+      const elDesc = document.getElementById('net-insp-desc');
+      const elInsight = document.getElementById('net-insp-insight');
+      const elNeighbors = document.getElementById('net-insp-neighbors');
+
+      if (elClust) elClust.textContent = clusterTitle(node.cluster);
+      if (elDeg) elDeg.textContent = `${neighborBtns.length} KONEKSI LANGSUNG`;
+      if (elTitle) elTitle.textContent = node.label;
+      if (elDesc) elDesc.textContent = node.desc;
+      if (elInsight) elInsight.textContent = node.insight;
+      if (elNeighbors) {
+        elNeighbors.innerHTML = neighborBtns.map(function(nb) {
+          const targetObj = NETWORK_NODES.find(function(x) { return x.id === nb.id; });
+          const lbl = targetObj ? targetObj.label : nb.id;
+          return `<button type="button" class="btn btn-secondary" style="min-height:34px; font-size:0.78rem;" onclick="selectNetworkNodeById('${nb.id}')">${lbl} · <em>${nb.rel}</em></button>`;
+        }).join('');
+      }
+    }
+
+    function clearNetworkSelection() {
+      selectedNetNodeId = null;
+      const selectEl = document.getElementById('net-node-select');
+      if (selectEl) selectEl.value = '';
+      if (activeNetCluster !== 'all') {
+        applyClusterHighlight(activeNetCluster);
+        return;
+      }
+      if (!window._netRefs) return;
+      window._netRefs.nodeSel.classed('selected', false).classed('dimmed', false);
+      window._netRefs.linkSel.classed('highlighted', false).classed('dimmed', false);
+      window._netRefs.edgeLabelSel.style('opacity', 0);
+    }
+
+    function applyClusterHighlight(clusterKey) {
+      if (!window._netRefs) return;
+      const refs = window._netRefs;
+      if (clusterKey === 'all') {
+        refs.nodeSel.classed('selected', false).classed('dimmed', false);
+        refs.linkSel.classed('highlighted', false).classed('dimmed', false);
+        refs.edgeLabelSel.style('opacity', 0);
+        return;
+      }
+      refs.nodeSel
+        .classed('selected', false)
+        .classed('dimmed', function(d) { return d.cluster !== clusterKey; });
+
+      refs.linkSel
+        .classed('highlighted', function(l) { return l.source.cluster === clusterKey && l.target.cluster === clusterKey; })
+        .classed('dimmed', function(l) { return l.source.cluster !== clusterKey && l.target.cluster !== clusterKey; });
+
+      refs.edgeLabelSel.style('opacity', 0);
+    }
+
+    function filterNetworkCluster(clusterKey, btnEl) {
+      activeNetCluster = clusterKey;
+      const bar = btnEl ? btnEl.parentElement : null;
+      if (bar) {
+        bar.querySelectorAll('.btn-toggle').forEach(function(b) { b.classList.remove('active'); });
+      }
+      if (btnEl) btnEl.classList.add('active');
+      applyClusterHighlight(clusterKey);
+
+      const elClust = document.getElementById('net-insp-cluster');
+      const elTitle = document.getElementById('net-insp-title');
+      if (clusterKey === 'all') {
+        if (elClust) elClust.textContent = `Ikhtisar Topologi Jaringan`;
+        if (elTitle) elTitle.textContent = `22 Simpul Terhubung Lintas Skala`;
+      } else {
+        if (elClust) elClust.textContent = clusterTitle(clusterKey);
+        if (elTitle) elTitle.textContent = `Klaster Tersaring: ${clusterTitle(clusterKey).split('·')[1].trim()}`;
+      }
+    }
+
+    function resetNetworkView() {
+      activeNetCluster = 'all';
+      document.querySelectorAll('#bagian-04 .btn-toggle').forEach(function(b, idx) {
+        if (idx === 0) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+      clearNetworkSelection();
+      if (netSvg && netZoomBehavior) {
+        netSvg.transition().duration(300).call(netZoomBehavior.transform, d3.zoomIdentity);
+      }
+      if (netSimulation) {
+        netSimulation.alpha(0.6).restart();
+      }
+    }
+
+    // =========================================================================
+    // 5. BAGIAN 05: KALKULATOR CF & LCOE + TABEL TEKNOLOGI TEPAT GUNA
+    // =========================================================================
+    function updateCalculations() {
+      const capEl = document.getElementById('input-cap-mw');
+      const genEl = document.getElementById('input-gen-mwh');
+      const capexEl = document.getElementById('input-capex');
+      const lifeEl = document.getElementById('input-life');
+
+      if (!capEl || !genEl || !capexEl || !lifeEl) return;
+
+      const capMw = Math.max(0.001, parseFloat(capEl.value) || 5);
+      const genMwh = Math.max(1, parseFloat(genEl.value) || 7000);
+      const capexPerKw = Math.max(100, parseFloat(capexEl.value) || 1100);
+      const lifeYears = Math.max(5, parseFloat(lifeEl.value) || 25);
+
+      const cf = (genMwh / (capMw * 8760)) * 100;
+
+      // Simplified LCOE with 7% discount rate and 2% annual O&M
+      const r = 0.07;
+      const crf = (r * Math.pow(1 + r, lifeYears)) / (Math.pow(1 + r, lifeYears) - 1);
+      const totalCapexUsd = capMw * 1000 * capexPerKw;
+      const annualCostUsd = totalCapexUsd * (crf + 0.02);
+      const annualKwh = genMwh * 1000;
+      const lcoeCents = (annualCostUsd / annualKwh) * 100;
+
+      const outCf = document.getElementById('out-cf');
+      const outLcoe = document.getElementById('out-lcoe');
+      const outCompare = document.getElementById('out-cf-compare');
+
+      if (outCf) outCf.textContent = `${cf.toFixed(2).replace('.', ',')}%`;
+      if (outLcoe) outLcoe.textContent = `${lcoeCents.toFixed(2).replace('.', ',')} ¢/kWh`;
+
+      if (outCompare) {
+        if (cf < 20) {
+          outCompare.textContent = `Tipikal PLTS (Cirata 192 MWp = 14,57%; tarif kontrak 5,8 ¢/kWh)`;
+        } else if (cf < 55) {
+          outCompare.textContent = `Rentang angin / hidro musiman; perlu manajemen fleksibilitas grid`;
+        } else {
+          outCompare.textContent = `Mendekati baseload / dispatchable (PLTA bendungan atau panas bumi)`;
+        }
+      }
+    }
+
+    // Dedicated unidirectional handlers (prevent slider snap-back)
+    function syncCapFromSlider(val) {
+      const el = document.getElementById('input-cap-mw');
+      if (el) el.value = val;
+      updateCalculations();
+    }
+    function syncCapFromNumber(val) {
+      const el = document.getElementById('slider-cap-mw');
+      if (el) el.value = Math.min(1500, Math.max(0.01, parseFloat(val) || 0.01));
+      updateCalculations();
+    }
+
+    function syncGenFromSlider(val) {
+      const el = document.getElementById('input-gen-mwh');
+      if (el) el.value = val;
+      updateCalculations();
+    }
+    function syncGenFromNumber(val) {
+      const el = document.getElementById('slider-gen-mwh');
+      if (el) el.value = Math.min(6000000, Math.max(10, parseFloat(val) || 10));
+      updateCalculations();
+    }
+
+    function syncCapexFromSlider(val) {
+      const el = document.getElementById('input-capex');
+      if (el) el.value = val;
+      updateCalculations();
+    }
+    function syncCapexFromNumber(val) {
+      const el = document.getElementById('slider-capex');
+      if (el) el.value = Math.min(4500, Math.max(500, parseFloat(val) || 500));
+      updateCalculations();
+    }
+
+    function syncLifeFromSlider(val) {
+      const el = document.getElementById('input-life');
+      if (el) el.value = val;
+      updateCalculations();
+    }
+    function syncLifeFromNumber(val) {
+      const el = document.getElementById('slider-life');
+      if (el) el.value = Math.min(40, Math.max(10, parseFloat(val) || 10));
+      updateCalculations();
+    }
+
+    function loadCalcPreset(presetKey) {
+      const presets = {
+        latihan: { label: `Skenario Aktif: Soal Uji Mandiri Bab 1 (PLTS 5 MWp)`, cap: 5, gen: 7000, capex: 1100, life: 25 },
+        cirata: { label: `Skenario Aktif: PLTS Terapung Cirata (192 MWp, 245 GWh/thn)`, cap: 192, gen: 245000, capex: 1050, life: 25 },
+        kamanggih: { label: `Skenario Aktif: PLTMH Desa Kamanggih (0,037 MW, Sumba Timur)`, cap: 0.037, gen: 185, capex: 2400, life: 20 },
+        mentarang: { label: `Skenario Aktif: PLTA Mentarang Induk (1.375 MW, Kalimantan Utara)`, cap: 1375, gen: 6600000, capex: 2200, life: 40 }
+      };
+      const p = presets[presetKey];
+      if (!p) return;
+
+      const lbl = document.getElementById('calc-preset-label');
+      if (lbl) lbl.textContent = p.label;
+
+      document.getElementById('input-cap-mw').value = p.cap;
+      document.getElementById('slider-cap-mw').value = Math.min(1500, p.cap);
+      document.getElementById('input-gen-mwh').value = p.gen;
+      document.getElementById('slider-gen-mwh').value = Math.min(6000000, p.gen);
+      document.getElementById('input-capex').value = p.capex;
+      document.getElementById('slider-capex').value = p.capex;
+      document.getElementById('input-life').value = p.life;
+      document.getElementById('slider-life').value = p.life;
+
+      updateCalculations();
+    }
+
+    const TTG_ROWS = [
+      {
+        type: `komunitas`,
+        name: `Pico-hydro Portabel Sumpur Kudus (Sijunjung, Sumbar)`,
+        cap: `≤ 1 kW`,
+        user: `Pemanen rotan & pos jaga hutan nagari; portabel dibawa ke sungai kecil plus baterai 45 Ah.`,
+        cost: `Purwarupa STEI ITB 2024; murah, mudah dikuasai, dimiliki & dirawat langsung oleh komunitas.`,
+        doc: `Rencana Desa / Hutan Nagari`
+      },
+      {
+        type: `komunitas`,
+        name: `PLTS Komunal Desa Muara Enggelam (Kutai Kartanegara)`,
+        cap: `Komunal Desa`,
+        user: `Warga desa terpencil & ekonomi lokal melalui listrik surya terpusat desa.`,
+        cost: `Dikelola BUMDes Bersinar Desaku; menuntut penguatan payung hukum undang-undang bagi BUMDes EBT.`,
+        doc: `Perdes BUMDes & RUED Provinsi`
+      },
+      {
+        type: `komunitas`,
+        name: `PLTMH Mbakuhau Desa Kamanggih (Sumba Timur, NTT)`,
+        cap: `37 kW`,
+        user: `Melistriki ~100 rumah, Puskesmas, sekolah, polsek & menara BTS.`,
+        cost: `Dana donor bersama IBEKA; 2 operator desa direkrut menjadi pegawai PLN + generator cadangan saat kemarau.`,
+        doc: `Kemitraan Desa–IBEKA–PLN (Jaringan 5 km)`
+      },
+      {
+        type: `rezim`,
+        name: `PLTS Terapung Cirata (Purwakarta, Jawa Barat)`,
+        cap: `192 MWp`,
+        user: `Memasok grid Jawa–Bali (245 GWh/tahun) tanpa mengambil lahan sawah/hutan.`,
+        cost: `Kerja sama PLN & Masdar dengan tarif PPA 5,8 sen USD/kWh; menuntut manajemen zonasi waduk.`,
+        doc: `RUPTL, RTRW Kabupaten & Izin Tata Kelola Waduk`
+      },
+      {
+        type: `rezim`,
+        name: `PLTA Mentarang Induk (Kalimantan Utara)`,
+        cap: `1.375 MW`,
+        user: `Jaringan listrik PLN & jangkar daya bersih kawasan industri hijau Kaltara.`,
+        cost: `Investasi infrastruktur skala besar; target operasi 2030 dengan standar bendungan & transmisi tinggi.`,
+        doc: `RUPTL, RTRW Provinsi, AMDAL & Koridor REZ`
+      }
+    ];
+
+    function filterTtgTable(filterVal) {
+      const tbody = document.getElementById('ttg-table-body');
+      if (!tbody) return;
+      const rows = TTG_ROWS.filter(function(r) {
+        return filterVal === 'all' || r.type === filterVal;
+      });
+      tbody.innerHTML = rows.map(function(r) {
+        const badgeClass = r.type === 'komunitas' ? 'tag-chip tag-chip-pine' : 'tag-chip tag-chip-slate';
+        const badgeLabel = r.type === 'komunitas' ? 'Komunitas / BUMDes' : 'Utilitas / Rezim';
+        return `<tr>
+          <td>
+            <div style="margin-bottom:var(--space-xs);"><span class="${badgeClass}">${badgeLabel}</span></div>
+            <strong>${r.name}</strong>
+          </td>
+          <td class="num-cell"><strong>${r.cap}</strong></td>
+          <td>${r.user}</td>
+          <td>${r.cost}</td>
+          <td><span class="index-num">${r.doc}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      selectChain('listrik', document.querySelector('#bagian-01 .btn-toggle'));
+      renderLandscapeChart('rukn');
+      initEnergyMap();
+      renderFunnelChart();
+      initNetworkGraph();
+      updateCalculations();
+      filterTtgTable('all');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>
